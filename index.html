@@ -1,0 +1,2831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#09090f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Intima Matrix">
+<title>Intima Matrix</title>
+<link rel="manifest" href="manifest.json">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300;1,9..40,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+/* ─── RESET & BASE ─────────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;background:#09090f;font-family:'DM Sans',system-ui,sans-serif;color:#e8e6f0;}
+input,textarea,button,select{font-family:inherit;}
+button{cursor:pointer;-webkit-appearance:none;}
+textarea{resize:vertical;}
+
+/* ─── CSS VARIABLES ────────────────────────────────────────── */
+:root{
+  --canvas:#09090f;
+  --surf:rgba(255,255,255,0.04);
+  --surf-raised:rgba(255,255,255,0.07);
+  --border:rgba(255,255,255,0.09);
+  --border-hi:rgba(255,255,255,0.13);
+  --border-dim:rgba(255,255,255,0.06);
+  --text-1:#e8e6f0;
+  --text-2:rgba(232,230,240,0.65);
+  --text-3:rgba(232,230,240,0.38);
+  --text-4:rgba(232,230,240,0.22);
+  --success:#5DCAA5;
+  --success-bg:rgba(93,202,165,0.12);
+  --danger:#E24B4A;
+  --danger-bg:rgba(226,75,74,0.1);
+  --info:#85B7EB;
+  --warn:#EF9F27;
+  --c-risk:#EF9F27;
+  --c-emotion:#D4537E;
+  --c-assert:#5DCAA5;
+  --c-ambition:#AFA9EC;
+  --c-social:#85B7EB;
+  --c-spont:#E8D44D;
+  --r:14px;--r-btn:10px;--r-sm:6px;--r-xl:20px;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+
+/* ─── APP SHELL ─────────────────────────────────────────────── */
+#app{
+  position:fixed;inset:0;
+  display:flex;flex-direction:column;
+  background:var(--canvas);
+  max-width:430px;margin:0 auto;
+  overflow:hidden;
+}
+
+/* ─── SCREENS ───────────────────────────────────────────────── */
+.screen{
+  display:none;flex-direction:column;
+  flex:1;overflow:hidden;
+  position:relative;
+}
+.screen.active{display:flex;}
+.scroll-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.scroll-body::-webkit-scrollbar{display:none;}
+
+/* ─── TOPBAR ────────────────────────────────────────────────── */
+.topbar{
+  background:rgba(255,255,255,0.03);
+  border-bottom:0.5px solid var(--border-dim);
+  padding:calc(14px + var(--safe-top)) 18px 14px;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+}
+.topbar-title{font-size:15px;font-weight:500;color:var(--text-1);}
+.topbar-wordmark{font-size:16px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:#fff;}
+.topbar-label{font-size:10px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-3);margin-bottom:2px;}
+
+/* ─── NAVBAR ────────────────────────────────────────────────── */
+.navbar{
+  background:rgba(255,255,255,0.03);
+  border-top:0.5px solid var(--border-dim);
+  display:flex;justify-content:space-around;
+  padding:10px 0 calc(6px + var(--safe-bottom));
+  flex-shrink:0;
+}
+.nav-item{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  font-size:10px;letter-spacing:0.05em;text-transform:uppercase;
+  color:var(--text-3);background:none;border:none;padding:0 12px;
+  position:relative;
+}
+.nav-item.active{color:var(--text-1);}
+.nav-item i{font-size:20px;}
+.nav-badge{position:absolute;top:0;right:6px;width:6px;height:6px;border-radius:50%;background:var(--text-1);}
+
+/* ─── TYPOGRAPHY ─────────────────────────────────────────────── */
+.t-display{font-size:24px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;color:#fff;line-height:1.2;}
+.t-title{font-size:18px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:#fff;line-height:1.3;}
+.t-heading{font-size:15px;font-weight:500;color:var(--text-1);line-height:1.4;}
+.t-body{font-size:13px;color:var(--text-2);line-height:1.7;}
+.t-caption{font-size:11px;color:var(--text-3);letter-spacing:0.03em;line-height:1.5;}
+.t-label{font-size:10px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-3);}
+
+/* ─── CARDS ──────────────────────────────────────────────────── */
+.card{background:var(--surf);border:0.5px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:12px;}
+.card-pad{padding:16px 18px;}
+.card-raised{background:var(--surf-raised);border:0.5px solid var(--border-hi);border-radius:var(--r);padding:16px 18px;margin-bottom:12px;}
+.divider{height:0.5px;background:rgba(255,255,255,0.07);}
+
+/* ─── BUTTONS ────────────────────────────────────────────────── */
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;border-radius:var(--r-btn);font-size:13px;font-weight:500;padding:12px 20px;border:none;letter-spacing:0.02em;width:100%;transition:opacity 0.15s;}
+.btn:active{opacity:0.75;}
+.btn-primary{background:var(--text-1);color:var(--canvas);}
+.btn-ghost{background:var(--surf-raised);border:0.5px solid var(--border-hi);color:var(--text-1);}
+.btn-secondary{background:transparent;border:0.5px solid rgba(232,230,240,0.2);color:var(--text-2);}
+.btn-danger{background:transparent;border:0.5px solid rgba(226,75,74,0.3);color:var(--danger);}
+.btn-sm{padding:8px 16px;font-size:12px;width:auto;}
+.btn-inline{width:auto;flex:1;}
+
+/* ─── FORM ELEMENTS ──────────────────────────────────────────── */
+.input{background:var(--surf);border:0.5px solid var(--border);border-radius:var(--r-btn);color:var(--text-1);font-size:13px;padding:11px 14px;width:100%;outline:none;line-height:1.6;}
+.input::placeholder{color:var(--text-4);}
+.input:focus{border-color:rgba(232,230,240,0.3);}
+textarea.input{resize:vertical;min-height:90px;}
+
+/* ─── TOGGLE ─────────────────────────────────────────────────── */
+.toggle{position:relative;width:36px;height:20px;border-radius:10px;background:rgba(255,255,255,0.1);cursor:pointer;transition:background 0.2s;flex-shrink:0;border:none;}
+.toggle.on{background:var(--success);}
+.toggle-knob{position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#fff;transition:transform 0.2s;pointer-events:none;}
+.toggle.on .toggle-knob{transform:translateX(16px);}
+
+/* ─── OPTION ROWS ─────────────────────────────────────────────── */
+.q-opt{display:flex;align-items:flex-start;gap:12px;background:var(--surf);border:0.5px solid var(--border);border-radius:10px;padding:12px 14px;cursor:pointer;margin-bottom:8px;transition:border-color 0.15s;}
+.q-opt.selected{border-color:rgba(232,230,240,0.45);background:var(--surf-raised);}
+.q-radio{width:18px;height:18px;border-radius:50%;border:0.5px solid rgba(232,230,240,0.2);flex-shrink:0;margin-top:1px;transition:background 0.15s,border-color 0.15s;}
+.q-opt.selected .q-radio{background:var(--text-1);border-color:var(--text-1);}
+
+/* ─── LIST ROWS ──────────────────────────────────────────────── */
+.list-row{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:0.5px solid var(--border-dim);}
+.list-row:last-child{border-bottom:none;}
+.list-row-label{font-size:13px;color:var(--text-1);}
+.list-row-sub{font-size:11px;color:var(--text-3);margin-top:2px;line-height:1.4;}
+.list-row-value{font-size:12px;color:var(--text-3);display:flex;align-items:center;gap:5px;}
+.list-section{padding:14px 18px 6px;}
+
+/* ─── COMPAT BARS ────────────────────────────────────────────── */
+.compat-wrap{flex:1;height:3px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;}
+.compat-fill{height:100%;border-radius:2px;}
+
+/* ─── STEP PROGRESS ──────────────────────────────────────────── */
+.step-bar{height:2px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;margin-bottom:0;}
+.step-fill{height:100%;background:var(--text-1);border-radius:2px;}
+.dot-prog{display:flex;gap:4px;justify-content:center;}
+.dot-p{width:8px;height:3px;border-radius:2px;background:rgba(255,255,255,0.12);}
+.dot-p.done{background:var(--text-1);}
+.journey-dot{width:26px;height:26px;border-radius:50%;border:0.5px solid rgba(255,255,255,0.15);background:var(--surf);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.journey-dot.done{background:rgba(93,202,165,0.2);border-color:rgba(93,202,165,0.4);}
+.journey-line{flex:1;height:0.5px;margin-bottom:16px;}
+
+/* ─── AVATAR ─────────────────────────────────────────────────── */
+.avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;flex-shrink:0;}
+
+/* ─── CHAT BUBBLES ───────────────────────────────────────────── */
+.bubble-you{background:rgba(133,183,235,0.12);border:0.5px solid rgba(133,183,235,0.2);border-radius:14px 2px 14px 14px;padding:10px 13px;font-size:13px;color:var(--text-1);line-height:1.55;max-width:82%;}
+.bubble-them{background:var(--surf);border:0.5px solid var(--border);border-radius:2px 14px 14px 14px;padding:10px 13px;font-size:13px;color:var(--text-1);line-height:1.55;max-width:82%;}
+
+/* ─── INPUT BAR ──────────────────────────────────────────────── */
+.input-bar{background:rgba(255,255,255,0.03);border-top:0.5px solid var(--border-dim);padding:10px 14px calc(10px + var(--safe-bottom));display:flex;align-items:flex-end;gap:10px;flex-shrink:0;}
+.msg-input{flex:1;background:var(--surf);border:0.5px solid var(--border);border-radius:22px;color:var(--text-1);font-family:'DM Sans',sans-serif;font-size:13px;padding:10px 14px;resize:none;outline:none;min-height:40px;max-height:100px;line-height:1.5;}
+.msg-input::placeholder{color:var(--text-4);font-size:13px;}
+.send-btn{width:36px;height:36px;border-radius:50%;background:var(--text-1);border:none;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity 0.15s;}
+.send-btn:active{opacity:0.7;}
+
+/* ─── NOTIFICATION ITEMS ─────────────────────────────────────── */
+.notif-item{display:flex;align-items:flex-start;gap:12px;padding:13px 18px;border-bottom:0.5px solid var(--border-dim);cursor:pointer;}
+.notif-item:last-child{border-bottom:none;}
+.notif-item.unread{background:rgba(255,255,255,0.025);}
+.notif-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.unread-dot{width:6px;height:6px;border-radius:50%;background:var(--text-1);flex-shrink:0;margin-top:5px;}
+
+/* ─── MATCH HISTORY CARDS ────────────────────────────────────── */
+.hist-card{background:var(--surf);border:0.5px solid var(--border);border-radius:var(--r);margin-bottom:12px;overflow:hidden;cursor:pointer;}
+.hist-card .expand{display:none;}
+.hist-card.open .expand{display:block;}
+.hist-card.open .chev-icon{transform:rotate(180deg);}
+.chev-icon{transition:transform 0.2s;color:var(--text-3);font-size:15px;}
+
+/* ─── PILL TAGS ──────────────────────────────────────────────── */
+.pill{font-size:10px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;padding:3px 9px;border-radius:20px;border:0.5px solid var(--border-dim);background:var(--surf);color:var(--text-3);}
+
+/* ─── TRAIT LEGEND ───────────────────────────────────────────── */
+.trait-legend{display:flex;gap:8px;flex-wrap:wrap;}
+.trait-dot-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text-3);}
+.trait-dot{width:6px;height:6px;border-radius:50%;display:inline-block;}
+
+/* ─── CANVAS CONTAINERS ──────────────────────────────────────── */
+.canvas-wrap{position:relative;background:var(--canvas);overflow:hidden;}
+.canvas-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;}
+.canvas-label-box{background:rgba(9,9,15,0.65);border:0.5px solid rgba(255,255,255,0.13);border-radius:var(--r);padding:16px 24px;text-align:center;}
+
+/* ─── STATUS BAR INDICATOR ───────────────────────────────────── */
+.status-bar-top{height:var(--safe-top);background:rgba(255,255,255,0.03);flex-shrink:0;}
+
+/* ─── PHOTO SLOTS ────────────────────────────────────────────── */
+.photo-slot{width:80px;height:80px;border-radius:10px;border:0.5px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;background:var(--surf);}
+.photo-slot.dashed{border-style:dashed;}
+
+/* ─── REVEAL STRIP ───────────────────────────────────────────── */
+.reveal-strip{display:flex;align-items:center;gap:10px;margin:8px 0;}
+.reveal-strip-line{flex:1;height:0.5px;background:var(--border-dim);}
+.reveal-strip-label{font-size:10px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-3);display:flex;align-items:center;gap:5px;white-space:nowrap;}
+
+/* ─── OVERLAY / MODAL ────────────────────────────────────────── */
+.overlay{position:fixed;inset:0;background:rgba(9,9,15,0.85);display:none;flex-direction:column;align-items:center;justify-content:flex-end;z-index:100;padding-bottom:var(--safe-bottom);}
+.overlay.visible{display:flex;}
+.sheet{background:#141420;border:0.5px solid var(--border);border-radius:24px 24px 0 0;padding:24px 20px;width:100%;max-width:430px;}
+
+/* ─── PROGRESS SEGS ──────────────────────────────────────────── */
+.prog-segs{display:flex;gap:3px;}
+.prog-seg{flex:1;height:2px;border-radius:2px;}
+
+/* ─── SEARCHING TIMER ────────────────────────────────────────── */
+#searching-status{font-size:12px;color:var(--text-3);text-align:center;margin-top:8px;letter-spacing:0.04em;}
+
+/* ─── INACTIVE MATCH ─────────────────────────────────────────── */
+.inactive-card{background:var(--surf);border:0.5px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:12px;}
+
+/* ─── ONBOARDING SPECIAL ─────────────────────────────────────── */
+.onboard-progress{padding:14px 20px;border-bottom:0.5px solid var(--border-dim);}
+.onboard-progress-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+
+/* ─── ANIMATIONS ─────────────────────────────────────────────── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.fade-up{animation:fadeUp 0.3s ease forwards;}
+@keyframes pulse{0%,100%{opacity:0.4;}50%{opacity:1;}}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ══════════════════════════════════════════════
+  SCREEN: LOADING (shown while auth state resolves)
+══════════════════════════════════════════════ -->
+<div id="s-loading" class="screen" style="display:flex;align-items:center;justify-content:center;">
+  <div style="text-align:center;">
+    <p style="font-size:16px;font-weight:500;letter-spacing:0.2em;text-transform:uppercase;color:rgba(232,230,240,0.4);">Intima Matrix</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+  SCREEN: LOGIN
+══════════════════════════════════════════════ -->
+<div id="s-login" class="screen">
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:32px 24px;">
+    <p style="font-size:11px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;color:rgba(232,230,240,0.35);margin-bottom:8px;">Welcome back</p>
+    <p style="font-size:24px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:#fff;margin-bottom:32px;">Intima Matrix</p>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div>
+        <p style="font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:rgba(232,230,240,0.35);margin-bottom:6px;">Email</p>
+        <input class="input" type="email" id="login-email" placeholder="your@email.com" autocomplete="email">
+      </div>
+      <div>
+        <p style="font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:rgba(232,230,240,0.35);margin-bottom:6px;">Password</p>
+        <input class="input" type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <div id="login-error" style="display:none;background:rgba(226,75,74,0.1);border:0.5px solid rgba(226,75,74,0.25);border-radius:8px;padding:10px 13px;">
+        <p style="font-size:12px;color:var(--danger);line-height:1.5;" id="login-error-text"></p>
+      </div>
+      <button class="btn btn-primary" onclick="authLogin()" id="login-btn" style="margin-top:4px;">Sign in</button>
+      <button class="btn btn-secondary" onclick="go('s-signup')">Create account</button>
+      <button onclick="authForgotPassword()" style="background:none;border:none;font-size:12px;color:rgba(232,230,240,0.35);padding:4px 0;text-align:center;cursor:pointer;font-family:inherit;">Forgot password?</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+  SCREEN: SIGNUP
+══════════════════════════════════════════════ -->
+<div id="s-signup" class="screen">
+  <div class="topbar">
+    <button onclick="go('s-login')" style="background:none;border:none;padding:0;"><i class="ti ti-arrow-left" style="font-size:18px;color:var(--text-3);"></i></button>
+    <p class="t-label">Create account</p>
+    <div style="width:28px;"></div>
+  </div>
+  <div class="scroll-body">
+    <div style="padding:24px 24px 32px;display:flex;flex-direction:column;gap:14px;">
+      <div class="card-raised" style="margin-bottom:4px;">
+        <p class="t-body" style="color:rgba(232,230,240,0.55);">This is the start of something honest. Take your time with the setup — it's what makes the matches real.</p>
+      </div>
+      <div>
+        <p style="font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:rgba(232,230,240,0.35);margin-bottom:6px;">Display name</p>
+        <input class="input" type="text" id="signup-name" placeholder="How you want to be known" autocomplete="name">
+      </div>
+      <div>
+        <p style="font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:rgba(232,230,240,0.35);margin-bottom:6px;">Email</p>
+        <input class="input" type="email" id="signup-email" placeholder="your@email.com" autocomplete="email">
+      </div>
+      <div>
+        <p style="font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:rgba(232,230,240,0.35);margin-bottom:6px;">Password</p>
+        <input class="input" type="password" id="signup-password" placeholder="At least 8 characters" autocomplete="new-password">
+      </div>
+      <div id="signup-error" style="display:none;background:rgba(226,75,74,0.1);border:0.5px solid rgba(226,75,74,0.25);border-radius:8px;padding:10px 13px;">
+        <p style="font-size:12px;color:var(--danger);line-height:1.5;" id="signup-error-text"></p>
+      </div>
+      <button class="btn btn-primary" onclick="authSignup()" id="signup-btn">Create account →</button>
+      <p class="t-caption" style="text-align:center;line-height:1.6;">By creating an account you agree to our terms of service and privacy policy.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+  SCREEN: EMAIL VERIFICATION
+══════════════════════════════════════════════ -->
+<div id="s-verify" class="screen">
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center;">
+    <div style="width:56px;height:56px;border-radius:50%;background:rgba(175,169,236,0.12);border:0.5px solid rgba(175,169,236,0.25);display:flex;align-items:center;justify-content:center;margin-bottom:20px;">
+      <i class="ti ti-mail" style="font-size:24px;color:var(--c-ambition);"></i>
+    </div>
+    <p class="t-heading" style="margin-bottom:8px;">Check your email</p>
+    <p class="t-body" style="color:rgba(232,230,240,0.45);max-width:280px;margin:0 auto 24px;">We sent a verification link to <span id="verify-email" style="color:var(--text-2);"></span></p>
+    <p class="t-caption" style="line-height:1.6;max-width:260px;margin:0 auto 20px;">Once verified, come back here and sign in.</p>
+    <button class="btn btn-ghost" onclick="go('s-login')" style="width:auto;padding:11px 24px;">Back to sign in</button>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+  SCREEN: PHILOSOPHY (splash / intro)
+══════════════════════════════════════════════ -->
+<div id="s-philosophy" class="screen active">
+  <div class="canvas-wrap" style="height:52vh;min-height:280px;flex-shrink:0;">
+    <canvas id="c-philosophy" style="display:block;width:100%;height:100%;"></canvas>
+    <div class="canvas-overlay">
+      <div class="canvas-label-box">
+        <p class="t-label" style="margin-bottom:10px;">Welcome to</p>
+        <p class="t-display">Intima Matrix</p>
+        <p class="t-caption" style="margin-top:6px;letter-spacing:0.08em;">a different kind of dating app</p>
+      </div>
+    </div>
+  </div>
+  <div class="scroll-body">
+    <div style="padding:16px 20px 24px;display:flex;flex-direction:column;gap:12px;">
+      <div class="card-raised">
+        <p style="font-size:15px;color:var(--text-1);line-height:1.75;">This app is about finding where two people match in their relationship with each other — by first answering the question: <strong>Who am I?</strong></p>
+      </div>
+      <div class="card">
+        <div class="card-pad">
+          <p class="t-body" style="margin-bottom:10px;">Not what you do for a living. Not what you look like. But the things that truly define how you approach life.</p>
+          <p class="t-body" style="margin-bottom:10px;">If we can't first see ourselves honestly, we won't know what we'll genuinely mesh with in a relationship.</p>
+          <div class="divider" style="margin:10px 0;"></div>
+          <p style="font-size:13px;font-weight:500;color:var(--text-1);line-height:1.6;">The other things are superficial — so this part comes first.</p>
+        </div>
+      </div>
+      <button class="btn btn-ghost" onclick="go('s-howit')">I'm ready to be honest →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+  SCREEN: HOW IT WORKS
+══════════════════════════════════════════════ -->
+<div id="s-howit" class="screen">
+  <div class="topbar">
+    <button class="btn btn-ghost btn-sm" style="width:auto;padding:7px 12px;" onclick="go('s-philosophy')"><i class="ti ti-arrow-left"></i></button>
+    <p class="t-label">Before we start</p>
+    <div style="width:60px;"></div>
+  </div>
+  <div class="scroll-body">
+    <div style="padding:20px;display:flex;flex-direction:column;gap:12px;">
+      <p class="t-heading" style="margin-bottom:4px;">How Intima Matrix works</p>
+      <div class="card">
+        <div class="card-pad" style="display:flex;gap:14px;align-items:flex-start;">
+          <div style="width:36px;height:36px;border-radius:50%;background:rgba(175,169,236,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-user" style="font-size:16px;color:var(--c-ambition);"></i></div>
+          <div><p style="font-size:13px;font-weight:500;color:var(--text-1);margin:0 0 4px;">You answer honestly</p><p class="t-body">A behavioral questionnaire about how you actually operate in life. No right answers — only accurate ones.</p></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-pad" style="display:flex;gap:14px;align-items:flex-start;">
+          <div style="width:36px;height:36px;border-radius:50%;background:rgba(93,202,165,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-adjustments" style="font-size:16px;color:var(--success);"></i></div>
+          <div><p style="font-size:13px;font-weight:500;color:var(--text-1);margin:0 0 4px;">We find one match</p><p class="t-body">One person, carefully selected. Not a feed — one real match at a time.</p></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-pad" style="display:flex;gap:14px;align-items:flex-start;">
+          <div style="width:36px;height:36px;border-radius:50%;background:rgba(133,183,235,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-messages" style="font-size:16px;color:var(--info);"></i></div>
+          <div><p style="font-size:13px;font-weight:500;color:var(--text-1);margin:0 0 4px;">You talk first</p><p class="t-body">Photos reveal gradually as the connection deepens — earned through engagement, not granted upfront.</p></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-pad" style="display:flex;gap:14px;align-items:flex-start;">
+          <div style="width:36px;height:36px;border-radius:50%;background:rgba(232,212,60,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-clock" style="font-size:16px;color:var(--c-spont);"></i></div>
+          <div><p style="font-size:13px;font-weight:500;color:var(--text-1);margin:0 0 4px;">No pressure, no feed</p><p class="t-body">No swiping. No queue of faces to judge. One conversation given the space it deserves.</p></div>
+        </div>
+      </div>
+      <p class="t-caption" style="text-align:center;line-height:1.6;">Setup takes 10–15 minutes. Progress saves automatically.</p>
+      <button class="btn btn-primary" onclick="go('s-basics')">Let's get started →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+  SCREEN: BASICS (Step 1)
+══════════════════════════════════════════════ -->
+<div id="s-basics" class="screen">
+  <div class="onboard-progress">
+    <div class="onboard-progress-header">
+      <p class="t-label">Step 1 of 3 — The basics</p>
+      <p class="t-caption">~2 min</p>
+    </div>
+    <div class="step-bar"><div class="step-fill" style="width:33%;"></div></div>
+  </div>
+  <div class="scroll-body">
+    <div style="padding:20px;display:flex;flex-direction:column;gap:14px;">
+      <div>
+        <p style="font-size:13px;font-weight:500;color:var(--text-1);margin:0 0 4px;">What are you here for?</p>
+        <p class="t-caption" style="margin-bottom:12px;">Be honest — mismatches here end matches early.</p>
+        <div class="q-opt" onclick="selectQ(this,'intention')"><div class="q-radio"></div><div><p style="font-size:13px;font-weight:500;color:var(--text-1);margin:0 0 2px;">A long-term relationship</p><p class="t-caption">Something that could become a real partnership</p></div></div>
+        <div class="q-opt" onclick="selectQ(this,'intention')"><div class="q-radio"></div><div><p style="font-size:13px;font-weight:500;color:var(--text-1);margin:0 0 2px;">Marriage</p><p class="t-caption">I want to find someone to build a life with</p></div></div>
+        <div class="q-opt" onclick="selectQ(this,'intention')"><div class="q-radio"></div><div><p style="font-size:13px;font-weight:500;color:var(--text-1);margin:0 0 2px;">Open to where it goes</p><p class="t-caption">Serious only — not putting a label on it yet</p></div></div>
+      </div>
+      <div class="divider"></div>
+      <div>
+        <p style="font-size:13px;font-weight:500;color:var(--text-1);margin:0 0 4px;">Children</p>
+        <p class="t-caption" style="margin-bottom:12px;">Hard filter — mismatches here won't be matched.</p>
+        <div class="q-opt" onclick="selectQ(this,'children')"><div class="q-radio"></div><p style="font-size:13px;color:var(--text-1);">I want children</p></div>
+        <div class="q-opt" onclick="selectQ(this,'children')"><div class="q-radio"></div><p style="font-size:13px;color:var(--text-1);">I don't want children</p></div>
+        <div class="q-opt" onclick="selectQ(this,'children')"><div class="q-radio"></div><p style="font-size:13px;color:var(--text-1);">I have children and they're part of the picture</p></div>
+        <div class="q-opt" onclick="selectQ(this,'children')"><div class="q-radio"></div><p style="font-size:13px;color:var(--text-1);">I'm open either way</p></div>
+      </div>
+      <button class="btn btn-primary" onclick="go('s-questionnaire')">Save and continue →</button>
+      <p class="t-caption" style="text-align:center;">Progress saved automatically.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+  SCREEN: QUESTIONNAIRE (Step 2)
+══════════════════════════════════════════════ -->
+<div id="s-questionnaire" class="screen">
+  <div class="onboard-progress">
+    <div class="onboard-progress-header">
+      <p class="t-label" id="q-step-label">Step 2 of 3 — Who you are</p>
+      <p class="t-caption">~10 min</p>
+    </div>
+    <div class="step-bar"><div class="step-fill" style="width:66%;"></div></div>
+  </div>
+  <div class="scroll-body">
+    <div style="padding:20px;display:flex;flex-direction:column;gap:14px;">
+      <div class="card"><div class="card-pad"><p class="t-body">Answer honestly — the more truthful you are, the better your match will be. There are no impressive answers here, only accurate ones.</p></div></div>
+      <div id="q-container"></div>
+      <div class="dot-prog" id="q-dots"></div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-secondary btn-inline" id="q-back-btn" onclick="prevQuestion()" style="width:auto;padding:11px 18px;">← Back</button>
+        <button class="btn btn-primary btn-inline" id="q-next-btn" onclick="nextQuestion()">Next question →</button>
+      </div>
+      <p class="t-caption" style="text-align:center;">Progress saved automatically.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+  SCREEN: PHOTOS (Step 3)
+══════════════════════════════════════════════ -->
+<div id="s-photos" class="screen">
+  <div class="onboard-progress">
+    <div class="onboard-progress-header">
+      <p class="t-label">Step 3 of 3 — Your photos</p>
+      <p class="t-caption">~3 min</p>
+    </div>
+    <div class="step-bar"><div class="step-fill" style="width:90%;"></div></div>
+  </div>
+  <div class="scroll-body">
+    <div style="padding:20px;display:flex;flex-direction:column;gap:14px;">
+      <div class="card-raised">
+        <p style="font-size:13px;font-weight:500;color:var(--text-1);margin:0 0 6px;">Photos come last — intentionally</p>
+        <p class="t-body">Your match won't see your full photos until the conversation earns it. What you set up here reveals gradually — starting with a single detail you choose.</p>
+      </div>
+      <div>
+        <p style="font-size:13px;font-weight:500;color:var(--text-1);margin:0 0 4px;">Your highlight</p>
+        <p class="t-caption" style="margin-bottom:12px;line-height:1.55;">Upload a photo and crop the part of yourself you'd most like someone to notice first.</p>
+        <div style="border:0.5px dashed rgba(255,255,255,0.15);border-radius:var(--r);padding:28px 20px;text-align:center;">
+          <i class="ti ti-photo-up" style="font-size:28px;color:var(--text-3);display:block;margin:0 auto 10px;"></i>
+          <p class="t-body" style="margin-bottom:12px;">Upload a photo to crop your highlight</p>
+          <input type="file" id="photo-file-input" accept="image/*" style="display:none" onchange="handleHighlightUpload(event)">
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('photo-file-input').click()">Choose photo</button>
+        </div>
+      </div>
+      <div>
+        <p style="font-size:13px;font-weight:500;color:var(--text-1);margin:0 0 4px;">Additional photos</p>
+        <p class="t-caption" style="margin-bottom:12px;line-height:1.55;">Unlock progressively as your conversation develops. Up to 4 — put your favourite first.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <div class="photo-slot dashed"><i class="ti ti-plus" style="font-size:20px;color:var(--text-3);"></i></div>
+          <div class="photo-slot dashed" style="opacity:0.5;"><i class="ti ti-plus" style="font-size:20px;color:var(--text-3);"></i></div>
+          <div class="photo-slot dashed" style="opacity:0.25;"><i class="ti ti-plus" style="font-size:20px;color:var(--text-3);"></i></div>
+          <div class="photo-slot dashed" style="opacity:0.12;"><i class="ti ti-plus" style="font-size:20px;color:var(--text-3);"></i></div>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="startSearching()">Complete setup →</button>
+      <p class="t-caption" style="text-align:center;">You can update photos at any time from your profile.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+  SCREEN: SEARCHING
+══════════════════════════════════════════════ -->
+<div id="s-searching" class="screen">
+  <div class="canvas-wrap" style="flex:1;min-height:0;">
+    <canvas id="c-searching" style="display:block;width:100%;height:100%;"></canvas>
+    <div class="canvas-overlay">
+      <div class="canvas-label-box">
+        <p class="t-label" style="margin-bottom:8px;">Intima Matrix</p>
+        <p class="t-title" style="margin-bottom:8px;">Finding your match</p>
+        <p class="t-body" style="color:rgba(232,230,240,0.45);">Searching for personality alignment across all dimensions</p>
+      </div>
+    </div>
+  </div>
+  <div style="padding:16px 20px calc(16px + var(--safe-bottom));border-top:0.5px solid var(--border-dim);">
+    <p class="t-body" style="text-align:center;color:var(--text-3);">We'd rather find you one real match than rush you toward several approximate ones.</p>
+    <p id="searching-status" class="t-caption" style="text-align:center;margin-top:8px;"></p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+  SCREEN: HOME (dynamic content)
+══════════════════════════════════════════════ -->
+<div id="s-home" class="screen">
+  <div class="topbar">
+    <div>
+      <p class="topbar-label">Good evening</p>
+      <p class="topbar-wordmark">Intima Matrix</p>
+    </div>
+    <button onclick="go('s-myprofile')" style="background:none;border:none;padding:0;"><i class="ti ti-user-circle" style="font-size:22px;color:var(--text-3);"></i></button>
+  </div>
+  <div class="scroll-body" id="home-body">
+    <!-- injected dynamically -->
+  </div>
+  <div class="navbar">
+    <button class="nav-item active" onclick="go('s-home')"><i class="ti ti-home"></i>Home</button>
+    <button class="nav-item" onclick="go('s-myprofile')"><i class="ti ti-user"></i>Profile</button>
+    <button class="nav-item" id="nav-alerts-btn" onclick="go('s-notifications')"><i class="ti ti-bell"></i><span class="nav-badge" id="alert-badge"></span>Alerts</button>
+    <button class="nav-item" onclick="go('s-settings')"><i class="ti ti-settings"></i>Settings</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+  SCREEN: MATCH PROFILE
+══════════════════════════════════════════════ -->
+<div id="s-match-profile" class="screen">
+  <div class="topbar" style="padding-top:calc(14px + var(--safe-top));">
+    <button onclick="goBack()" style="background:none;border:none;padding:0;"><i class="ti ti-arrow-left" style="font-size:18px;color:var(--text-3);"></i></button>
+    <div style="text-align:center;">
+      <p class="topbar-title">Morgan</p>
+      <p class="t-caption">matched 4 days ago</p>
+    </div>
+    <button onclick="go('s-conversation')" style="background:none;border:none;padding:0;"><i class="ti ti-message" style="font-size:18px;color:var(--text-3);"></i></button>
+  </div>
+  <div class="scroll-body">
+    <!-- COMPATIBILITY MATRIX GRAPHIC -->
+    <div class="canvas-wrap" style="height:300px;">
+      <canvas id="c-match-profile" style="display:block;width:100%;height:100%;pointer-events:none;"></canvas>
+      <!-- center label — pointer-events:none so clicks pass through -->
+      <div id="matrix-center-label" class="canvas-overlay" style="pointer-events:none;transition:opacity 0.8s ease;">
+        <div style="background:rgba(9,9,15,0.62);border:0.5px solid rgba(255,255,255,0.12);border-radius:12px;padding:7px 15px;text-align:center;">
+          <p id="matrix-mode-label" class="t-label" style="margin-bottom:2px;">compatibility field</p>
+          <p style="font-size:11px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:rgba(232,230,240,0.7);">Morgan</p>
+        </div>
+      </div>
+      <!-- bottom bar: overlap legend + toggle button -->
+      <div style="position:absolute;bottom:0;left:0;right:0;padding:8px 12px 10px;background:linear-gradient(transparent,rgba(9,9,15,0.85));">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <div id="matrix-legend-base" style="display:flex;gap:8px;flex-wrap:wrap;">
+            <div class="trait-dot-item"><span class="trait-dot" style="background:var(--c-risk);"></span>Risk</div>
+            <div class="trait-dot-item"><span class="trait-dot" style="background:var(--c-emotion);"></span>Emotion</div>
+            <div class="trait-dot-item"><span class="trait-dot" style="background:var(--c-assert);"></span>Assertiveness</div>
+            <div class="trait-dot-item"><span class="trait-dot" style="background:var(--c-ambition);"></span>Ambition</div>
+            <div class="trait-dot-item"><span class="trait-dot" style="background:var(--c-social);"></span>Social energy</div>
+            <div class="trait-dot-item"><span class="trait-dot" style="background:var(--c-spont);"></span>Spontaneity</div>
+          </div>
+          <div id="matrix-legend-overlap" style="display:none;gap:8px;flex-wrap:wrap;">
+            <div class="trait-dot-item"><span class="trait-dot" style="background:#E24B4A;"></span>Shared</div>
+            <div class="trait-dot-item"><span class="trait-dot" style="background:#85B7EB;"></span>Divergent</div>
+            <div class="trait-dot-item"><span class="trait-dot" style="background:rgba(255,255,255,0.35);"></span>Ghost</div>
+          </div>
+          <button id="overlap-toggle-btn" onclick="toggleOverlap()" style="flex-shrink:0;background:rgba(255,255,255,0.08);border:0.5px solid rgba(255,255,255,0.18);border-radius:20px;padding:4px 10px;font-size:10px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:rgba(232,230,240,0.65);font-family:inherit;cursor:pointer;white-space:nowrap;">Show overlap</button>
+        </div>
+      </div>
+    </div>
+    <!-- written overlap assessment -->
+    <div id="overlap-assessment" style="display:none;padding:12px 16px;background:rgba(255,255,255,0.03);border-bottom:0.5px solid rgba(255,255,255,0.07);transition:opacity 0.5s ease;opacity:0;">
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;align-items:flex-start;gap:8px;"><span style="width:8px;height:8px;border-radius:50%;background:#E24B4A;flex-shrink:0;margin-top:3px;"></span><p style="font-size:12px;color:rgba(232,230,240,0.65);line-height:1.55;"><strong style="color:#e8e6f0;">Shared</strong> — Conflict style, life ambition, assertiveness. You approach challenges with similar drive and directness.</p></div>
+        <div style="display:flex;align-items:flex-start;gap:8px;"><span style="width:8px;height:8px;border-radius:50%;background:#85B7EB;flex-shrink:0;margin-top:3px;"></span><p style="font-size:12px;color:rgba(232,230,240,0.65);line-height:1.55;"><strong style="color:#e8e6f0;">Divergent</strong> — Spontaneity and social energy. You bring more spontaneity and openness; Morgan runs more structured and grounded.</p></div>
+      </div>
+    </div>
+    <div style="padding:18px;display:flex;flex-direction:column;gap:12px;">
+      <div class="card">
+        <div class="card-pad">
+          <p class="t-label" style="margin-bottom:10px;">Compatibility</p>
+          <p class="t-body" style="color:rgba(232,230,240,0.5);margin-bottom:12px;">Strong alignment on conflict style and life ambition. Useful contrast on spontaneity and social energy.</p>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:12px;color:var(--text-2);min-width:130px;">Conflict style</span><div class="compat-wrap"><div class="compat-fill" style="width:91%;background:#E24B4A;"></div></div><span style="font-size:11px;color:#E24B4A;min-width:44px;text-align:right;">Strong</span></div>
+            <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:12px;color:var(--text-2);min-width:130px;">Life ambition</span><div class="compat-wrap"><div class="compat-fill" style="width:85%;background:#E24B4A;"></div></div><span style="font-size:11px;color:#E24B4A;min-width:44px;text-align:right;">Strong</span></div>
+            <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:12px;color:var(--text-2);min-width:130px;">Core values</span><div class="compat-wrap"><div class="compat-fill" style="width:74%;background:#EF9F27;"></div></div><span style="font-size:11px;color:#EF9F27;min-width:44px;text-align:right;">Close</span></div>
+            <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:12px;color:var(--text-2);min-width:130px;">Spontaneity</span><div class="compat-wrap"><div class="compat-fill" style="width:36%;background:#85B7EB;"></div></div><span style="font-size:11px;color:#85B7EB;min-width:44px;text-align:right;">Contrast</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-pad">
+          <p class="t-label" style="margin-bottom:12px;">How they think</p>
+          <div style="margin-bottom:10px;">
+            <p class="t-caption" style="margin-bottom:4px;">When there's a disagreement they don't resolve right away...</p>
+            <p style="font-size:13px;color:var(--text-1);line-height:1.65;">"I need space first — I'll come back when I've processed it alone."</p>
+          </div>
+          <div class="divider" style="margin:10px 0;"></div>
+          <div style="margin-bottom:10px;">
+            <p class="t-caption" style="margin-bottom:4px;">Ten years from now, success looks like...</p>
+            <p style="font-size:13px;color:var(--text-1);line-height:1.65;">"I've built something meaningful — not necessarily famous, but mine."</p>
+          </div>
+          <div class="divider" style="margin:10px 0;"></div>
+          <div style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.03);border-radius:8px;padding:9px 11px;border:0.5px solid var(--border-dim);">
+            <i class="ti ti-lock" style="font-size:13px;color:rgba(232,230,240,0.4);flex-shrink:0;"></i>
+            <p style="font-size:12px;color:rgba(232,230,240,0.5);margin:0;line-height:1.5;">Two more answers unlock as the conversation continues</p>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-pad">
+          <p class="t-label" style="margin-bottom:10px;">Photos</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <div class="photo-slot">
+              <svg width="80" height="80" viewBox="0 0 80 80"><rect width="80" height="80" fill="#111120"/><ellipse cx="40" cy="32" rx="18" ry="20" fill="#1e1e38"/><ellipse cx="40" cy="72" rx="32" ry="24" fill="#181830"/><ellipse cx="32" cy="28" rx="4.5" ry="5" fill="#3a3a6a"/><ellipse cx="48" cy="28" rx="4.5" ry="5" fill="#3a3a6a"/><path d="M33 40 Q40 45 47 40" stroke="#3a3a6a" stroke-width="1.3" fill="none" stroke-linecap="round"/></svg>
+            </div>
+            <div class="photo-slot dashed" style="border-color:rgba(255,255,255,0.08);">
+              <div style="text-align:center;"><i class="ti ti-lock" style="font-size:14px;color:var(--text-3);display:block;margin-bottom:4px;"></i><p style="font-size:10px;color:var(--text-3);">keep talking</p></div>
+            </div>
+            <div class="photo-slot dashed" style="border-color:rgba(255,255,255,0.05);opacity:0.5;">
+              <i class="ti ti-lock" style="font-size:14px;color:var(--text-3);"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;padding-bottom:4px;">
+        <button class="btn btn-primary btn-inline" onclick="go('s-conversation')"><i class="ti ti-message" style="font-size:14px;"></i>Continue conversation</button>
+        <button class="btn btn-ghost" style="width:auto;padding:11px 14px;" onclick="go('s-report')"><i class="ti ti-flag" style="font-size:14px;color:var(--text-3);"></i></button>
+      </div>
+    </div>
+  </div>
+  <div class="navbar">
+    <button class="nav-item" onclick="go('s-home')"><i class="ti ti-home"></i>Home</button>
+    <button class="nav-item active" onclick="go('s-myprofile')"><i class="ti ti-user"></i>Profile</button>
+    <button class="nav-item" onclick="go('s-notifications')"><i class="ti ti-bell"></i>Alerts</button>
+    <button class="nav-item" onclick="go('s-settings')"><i class="ti ti-settings"></i>Settings</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+  SCREEN: OPENING PROMPT
+══════════════════════════════════════════════ -->
+<div id="s-opening" class="screen">
+  <div class="topbar">
+    <button onclick="go('s-match-profile')" style="background:none;border:none;padding:0;"><i class="ti ti-arrow-left" style="font-size:18px;color:var(--text-3);"></i></button>
+    <div style="text-align:center;flex:1;">
+      <p class="topbar-title">Morgan</p>
+      <p class="t-caption">your match</p>
+    </div>
+    <div style="width:28px;"></div>
+  </div>
+  <div class="scroll-body">
+    <div style="padding:20px;display:flex;flex-direction:column;gap:14px;">
+      <div style="text-align:center;">
+        <div style="display:inline-flex;align-items:center;gap:7px;background:rgba(175,169,236,0.1);border:0.5px solid rgba(175,169,236,0.22);border-radius:20px;padding:5px 14px;font-size:10px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--c-ambition);">
+          <i class="ti ti-sparkles" style="font-size:11px;"></i>your match is ready
+        </div>
+      </div>
+      <div class="card-raised">
+        <p class="t-label" style="margin-bottom:10px;">Something you both have in common</p>
+        <p style="font-size:14px;color:var(--text-1);line-height:1.7;margin-bottom:12px;">You both tend to tackle uncomfortable tasks head-on rather than let them sit. Tell each other about a time that instinct made things <em>worse</em> rather than better.</p>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span class="pill" style="border-color:rgba(175,169,236,0.25);background:rgba(175,169,236,0.08);color:var(--c-ambition);">Life ambition</span>
+          <span class="pill" style="border-color:rgba(93,202,165,0.25);background:rgba(93,202,165,0.08);color:var(--success);">Conflict style</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-pad">
+          <p style="font-size:11px;color:rgba(232,230,240,0.38);margin:0 0 10px;display:flex;align-items:center;gap:6px;"><i class="ti ti-lock" style="font-size:12px;"></i>your response — visible to Morgan only after you both submit</p>
+          <textarea class="input" id="opening-response" placeholder="Write your response..." style="min-height:90px;"></textarea>
+          <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+            <button class="btn btn-primary btn-sm" onclick="submitOpening()">Submit response</button>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="opacity:0.38;">
+        <div class="card-pad">
+          <p style="font-size:11px;color:rgba(232,230,240,0.38);display:flex;align-items:center;gap:6px;"><i class="ti ti-lock" style="font-size:12px;"></i>Morgan's response — visible once you've both submitted</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+  SCREEN: ACTIVE CONVERSATION
+══════════════════════════════════════════════ -->
+<div id="s-conversation" class="screen">
+  <div class="topbar">
+    <button onclick="go('s-match-profile')" style="background:none;border:none;padding:0;"><i class="ti ti-arrow-left" style="font-size:18px;color:var(--text-3);"></i></button>
+    <button onclick="go('s-match-profile')" style="text-align:center;flex:1;background:none;border:none;padding:0;cursor:pointer;">
+      <p class="topbar-title">Morgan</p>
+      <p class="t-caption" id="conv-status">active conversation</p>
+    </button>
+    <button onclick="go('s-match-profile')" style="background:none;border:none;padding:0;"><i class="ti ti-user" style="font-size:18px;color:var(--text-3);"></i></button>
+  </div>
+  <div class="scroll-body" id="conv-body" style="padding:14px 16px 8px;display:flex;flex-direction:column;gap:10px;">
+    <!-- messages injected -->
+  </div>
+  <div class="input-bar">
+    <textarea class="msg-input" id="msg-input" placeholder="Write your response..." rows="1" onkeydown="handleMsgKey(event)"></textarea>
+    <button class="send-btn" onclick="sendMessage()"><i class="ti ti-send" style="font-size:14px;color:var(--canvas);"></i></button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+  SCREEN: MY PROFILE
+══════════════════════════════════════════════ -->
+<div id="s-myprofile" class="screen">
+  <div class="topbar">
+    <div>
+      <p class="topbar-label">My profile</p>
+      <p class="topbar-wordmark">Intima Matrix</p>
+    </div>
+    <button style="background:none;border:none;padding:0;"><i class="ti ti-pencil" style="font-size:18px;color:var(--text-3);"></i></button>
+  </div>
+  <div class="scroll-body">
+    <div style="padding:18px;">
+      <p class="t-label" style="margin-bottom:10px;">Intima Matrix</p>
+      <div class="card" style="margin-bottom:14px;">
+        <div class="canvas-wrap" style="height:260px;">
+          <canvas id="c-mymatrix" style="display:block;width:100%;height:100%;pointer-events:none;"></canvas>
+          <!-- center label — fades out after 2.5s -->
+          <div id="mymatrix-center-label" class="canvas-overlay" style="pointer-events:none;transition:opacity 0.8s ease;">
+            <div style="background:rgba(9,9,15,0.62);border:0.5px solid rgba(255,255,255,0.12);border-radius:10px;padding:6px 13px;text-align:center;">
+              <p class="t-label" style="margin-bottom:1px;">your personality field</p>
+              <p style="font-size:10px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:rgba(232,230,240,0.65);">Intima Matrix</p>
+            </div>
+          </div>
+          <!-- bottom legend -->
+          <div style="position:absolute;bottom:0;left:0;right:0;padding:8px 12px 10px;background:linear-gradient(transparent,rgba(9,9,15,0.85));">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <div class="trait-dot-item"><span class="trait-dot" style="background:var(--c-risk);"></span>Risk tolerance</div>
+              <div class="trait-dot-item"><span class="trait-dot" style="background:var(--c-emotion);"></span>Emotional expression</div>
+              <div class="trait-dot-item"><span class="trait-dot" style="background:var(--c-assert);"></span>Assertiveness</div>
+              <div class="trait-dot-item"><span class="trait-dot" style="background:var(--c-ambition);"></span>Life ambition</div>
+              <div class="trait-dot-item"><span class="trait-dot" style="background:var(--c-social);"></span>Social energy</div>
+              <div class="trait-dot-item"><span class="trait-dot" style="background:var(--c-spont);"></span>Spontaneity</div>
+            </div>
+          </div>
+        </div>
+        <div style="padding:11px 15px 13px;border-top:0.5px solid var(--border-dim);">
+          <button onclick="toggleResetWarning()" style="width:100%;font-size:13px;padding:10px 0;background:transparent;color:var(--danger);border:0.5px solid rgba(226,75,74,0.28);border-radius:10px;font-family:'DM Sans',sans-serif;cursor:pointer;">Request questionnaire reset</button>
+        </div>
+      </div>
+      <div id="reset-warning" style="display:none;margin-bottom:14px;">
+        <div style="background:var(--surf-raised);border:0.5px solid rgba(226,75,74,0.25);border-radius:14px;padding:16px 18px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+            <div style="width:34px;height:34px;border-radius:50%;background:var(--danger-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-alert-triangle" style="font-size:16px;color:var(--danger);"></i></div>
+            <p style="font-size:14px;font-weight:500;color:var(--text-1);margin:0;">Before you reset</p>
+          </div>
+          <p class="t-body" style="margin-bottom:16px;color:rgba(232,230,240,0.6);">These answers are what your compatibility is built on. They're locked once matching begins — changing them would require restarting your place in the queue.</p>
+          <div style="display:flex;gap:10px;">
+            <button onclick="toggleResetWarning()" class="btn btn-primary btn-inline">Go back</button>
+            <button onclick="toggleResetWarning()" class="btn btn-danger btn-inline">Proceed</button>
+          </div>
+        </div>
+      </div>
+      <p class="t-label" style="margin-bottom:10px;">Your highlight</p>
+      <div class="card" style="margin-bottom:14px;">
+        <div class="card-pad" style="display:flex;gap:14px;align-items:center;">
+          <div class="photo-slot" style="flex-shrink:0;">
+            <svg width="80" height="80" viewBox="0 0 80 80"><rect width="80" height="80" fill="#111120"/><ellipse cx="40" cy="32" rx="18" ry="20" fill="#1e1e38"/><ellipse cx="40" cy="72" rx="32" ry="24" fill="#181830"/><ellipse cx="32" cy="28" rx="4.5" ry="5" fill="#3a3a6a"/><ellipse cx="48" cy="28" rx="4.5" ry="5" fill="#3a3a6a"/></svg>
+          </div>
+          <div style="flex:1;">
+            <p style="font-size:13px;font-weight:500;color:var(--text-1);margin:0 0 4px;">Your first impression</p>
+            <p class="t-caption" style="margin-bottom:10px;line-height:1.55;">The detail you chose to show first.</p>
+            <button class="btn btn-ghost btn-sm">Edit highlight</button>
+          </div>
+        </div>
+      </div>
+      <p class="t-label" style="margin-bottom:10px;">Hard filters</p>
+      <div class="card">
+        <div class="list-row"><span class="list-row-label">Relationship intention</span><span class="list-row-value">Long-term <i class="ti ti-lock" style="font-size:11px;opacity:0.35;"></i></span></div>
+        <div class="list-row"><span class="list-row-label">Children</span><span class="list-row-value">Open either way <i class="ti ti-lock" style="font-size:11px;opacity:0.35;"></i></span></div>
+      </div>
+    </div>
+  </div>
+  <div class="navbar">
+    <button class="nav-item" onclick="go('s-home')"><i class="ti ti-home"></i>Home</button>
+    <button class="nav-item active"><i class="ti ti-user"></i>Profile</button>
+    <button class="nav-item" onclick="go('s-notifications')"><i class="ti ti-bell"></i>Alerts</button>
+    <button class="nav-item" onclick="go('s-settings')"><i class="ti ti-settings"></i>Settings</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+  SCREEN: SETTINGS
+══════════════════════════════════════════════ -->
+<div id="s-settings" class="screen">
+  <div class="topbar">
+    <div>
+      <p class="topbar-label">Settings</p>
+      <p class="topbar-wordmark">Intima Matrix</p>
+    </div>
+  </div>
+  <div class="scroll-body">
+    <div style="padding:0 0 20px;">
+      <div class="list-section"><p class="t-label">Matching</p></div>
+      <div class="card" style="border-radius:0;border-left:none;border-right:none;margin-bottom:0;">
+        <div class="list-row"><div><p class="list-row-label">Pause matching</p><p class="list-row-sub">No new matches while paused. Current match unaffected.</p></div><button class="toggle" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></button></div>
+        <div class="list-row"><div><p class="list-row-label">Location</p><p class="list-row-sub">Bogotá, Colombia</p></div><i class="ti ti-chevron-right" style="font-size:15px;color:var(--text-3);"></i></div>
+        <div class="list-row"><div><p class="list-row-label">Match radius</p><p class="list-row-sub">Within 50 km · or open to anywhere</p></div><i class="ti ti-chevron-right" style="font-size:15px;color:var(--text-3);"></i></div>
+      </div>
+      <div class="list-section" style="margin-top:14px;"><p class="t-label">Notifications</p></div>
+      <div class="card" style="border-radius:0;border-left:none;border-right:none;margin-bottom:0;">
+        <div class="list-row"><p class="list-row-label">New match found</p><button class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></button></div>
+        <div class="list-row"><p class="list-row-label">Match responded to prompt</p><button class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></button></div>
+        <div class="list-row"><p class="list-row-label">New message</p><button class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></button></div>
+        <div class="list-row"><p class="list-row-label">Reveal unlocked</p><button class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></button></div>
+        <div class="list-row"><p class="list-row-label">Match inactive for 3 days</p><button class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></button></div>
+      </div>
+      <div class="list-section" style="margin-top:14px;"><p class="t-label">Privacy</p></div>
+      <div class="card" style="border-radius:0;border-left:none;border-right:none;margin-bottom:0;">
+        <div class="list-row"><div><p class="list-row-label">Read receipts</p><p class="list-row-sub">Let your match know when you've read their messages</p></div><button class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></button></div>
+        <div class="list-row"><div><p class="list-row-label">Active status</p><p class="list-row-sub">Show when you were last active</p></div><button class="toggle" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></button></div>
+        <div class="list-row"><p class="list-row-label">Block list</p><i class="ti ti-chevron-right" style="font-size:15px;color:var(--text-3);"></i></div>
+      </div>
+      <div class="list-section" style="margin-top:14px;"><p class="t-label">Account</p></div>
+      <div class="card" style="border-radius:0;border-left:none;border-right:none;margin-bottom:0;">
+        <div class="list-row"><p class="list-row-label">Display name</p><span class="list-row-value">Alex <i class="ti ti-chevron-right" style="font-size:13px;"></i></span></div>
+        <div class="list-row"><p class="list-row-label">Email</p><span class="list-row-value">a***@gmail.com <i class="ti ti-chevron-right" style="font-size:13px;"></i></span></div>
+        <div class="list-row"><p class="list-row-label">Change password</p><i class="ti ti-chevron-right" style="font-size:15px;color:var(--text-3);"></i></div>
+        <div class="list-row"><p class="list-row-label">Download my data</p><i class="ti ti-chevron-right" style="font-size:15px;color:var(--text-3);"></i></div>
+      </div>
+      <div class="list-section" style="margin-top:14px;"><p class="t-label">Danger zone</p></div>
+      <div class="card" style="border-radius:0;border-left:none;border-right:none;margin-bottom:0;">
+        <div class="list-row" onclick="authLogout()" style="cursor:pointer;"><p class="list-row-label" style="color:var(--danger);">Sign out</p><i class="ti ti-logout" style="font-size:15px;color:rgba(226,75,74,0.45);"></i></div>
+        <div class="list-row"><p class="list-row-label" style="color:var(--danger);">Delete account</p><i class="ti ti-chevron-right" style="font-size:15px;color:rgba(226,75,74,0.45);"></i></div>
+      </div>
+    </div>
+  </div>
+  <div class="navbar">
+    <button class="nav-item" onclick="go('s-home')"><i class="ti ti-home"></i>Home</button>
+    <button class="nav-item" onclick="go('s-myprofile')"><i class="ti ti-user"></i>Profile</button>
+    <button class="nav-item" onclick="go('s-notifications')"><i class="ti ti-bell"></i>Alerts</button>
+    <button class="nav-item active"><i class="ti ti-settings"></i>Settings</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+  SCREEN: NOTIFICATIONS
+══════════════════════════════════════════════ -->
+<div id="s-notifications" class="screen">
+  <div class="topbar">
+    <div>
+      <p class="topbar-label">Notifications</p>
+      <p class="topbar-wordmark">Intima Matrix</p>
+    </div>
+    <button onclick="markAllRead()" style="font-size:11px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;padding:5px 12px;background:var(--surf);border:0.5px solid var(--border);border-radius:20px;color:var(--text-3);font-family:'DM Sans',sans-serif;">Mark all read</button>
+  </div>
+  <div class="scroll-body">
+    <div class="list-section"><p class="t-label">Today</p></div>
+    <div class="notif-item unread" id="notif-reveal" onclick="go('s-conversation')">
+      <div class="notif-icon" style="background:rgba(240,153,123,0.1);"><i class="ti ti-eye" style="font-size:16px;color:#F0997B;"></i></div>
+      <div style="flex:1;"><p style="font-size:13px;font-weight:500;color:var(--text-1);margin:0 0 3px;line-height:1.4;">A new layer of Morgan's profile has unlocked</p><p class="t-body" style="color:rgba(232,230,240,0.42);font-size:12px;margin-bottom:3px;">Your conversation earned it. Open when you're ready.</p><p class="t-caption">2 hours ago</p></div>
+      <div class="unread-dot"></div>
+    </div>
+    <div class="notif-item unread" id="notif-msg" onclick="go('s-conversation')">
+      <div class="notif-icon" style="background:rgba(133,183,235,0.1);"><i class="ti ti-message" style="font-size:16px;color:var(--info);"></i></div>
+      <div style="flex:1;"><p style="font-size:13px;font-weight:500;color:var(--text-1);margin:0 0 3px;line-height:1.4;">Morgan replied</p><p class="t-body" style="color:rgba(232,230,240,0.42);font-size:12px;margin-bottom:3px;">The conversation continues. Open it when you have a moment.</p><p class="t-caption">4 hours ago</p></div>
+      <div class="unread-dot"></div>
+    </div>
+    <div class="list-section" style="margin-top:4px;"><p class="t-label">Earlier</p></div>
+    <div class="notif-item" onclick="go('s-match-profile')">
+      <div class="notif-icon" style="background:rgba(175,169,236,0.1);"><i class="ti ti-sparkles" style="font-size:16px;color:var(--c-ambition);"></i></div>
+      <div style="flex:1;"><p style="font-size:13px;font-weight:500;color:var(--text-1);margin:0 0 3px;line-height:1.4;">Your match is ready</p><p class="t-body" style="color:rgba(232,230,240,0.42);font-size:12px;margin-bottom:3px;">Take your time reading the compatibility.</p><p class="t-caption">Yesterday · 9:02 am</p></div>
+    </div>
+    <div class="notif-item">
+      <div class="notif-icon" style="background:rgba(212,83,126,0.1);"><i class="ti ti-moon" style="font-size:16px;color:var(--c-emotion);"></i></div>
+      <div style="flex:1;"><p style="font-size:13px;font-weight:500;color:var(--text-1);margin:0 0 3px;line-height:1.4;">Jordan hasn't opened the app in 3 days</p><p class="t-body" style="color:rgba(232,230,240,0.42);font-size:12px;margin-bottom:3px;">Keep the match open or let it go — your choice.</p><p class="t-caption">6 days ago</p></div>
+    </div>
+  </div>
+  <div class="navbar">
+    <button class="nav-item" onclick="go('s-home')"><i class="ti ti-home"></i>Home</button>
+    <button class="nav-item" onclick="go('s-myprofile')"><i class="ti ti-user"></i>Profile</button>
+    <button class="nav-item active"><i class="ti ti-bell"></i><span class="nav-badge" id="alert-badge-notif"></span>Alerts</button>
+    <button class="nav-item" onclick="go('s-settings')"><i class="ti ti-settings"></i>Settings</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+  SCREEN: HISTORY
+══════════════════════════════════════════════ -->
+<div id="s-history" class="screen">
+  <div class="topbar">
+    <div>
+      <p class="topbar-label">History</p>
+      <p class="topbar-wordmark">Intima Matrix</p>
+    </div>
+  </div>
+  <div class="scroll-body">
+    <div style="padding:18px;">
+      <p class="t-body" style="color:rgba(232,230,240,0.4);margin-bottom:16px;">Every match you've had is kept here. These were real conversations.</p>
+      <!-- MORGAN history -->
+      <div class="hist-card" id="hc-morgan" onclick="toggleHistCard('hc-morgan','hcanvas-morgan')">
+        <div style="padding:13px 15px;display:flex;gap:10px;align-items:flex-start;">
+          <div style="width:38px;height:38px;border-radius:50%;background:rgba(239,159,39,0.12);border:0.5px solid rgba(239,159,39,0.2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:var(--c-warn);flex-shrink:0;">M</div>
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;"><p style="font-size:14px;font-weight:500;color:var(--text-1);margin:0;">Morgan</p><span class="pill">Mutual close</span></div>
+            <p class="t-caption" style="margin-bottom:8px;">12 days · ended after full reveal · 3 weeks ago</p>
+            <div class="prog-segs"><div class="prog-seg" style="background:var(--success);opacity:0.6;"></div><div class="prog-seg" style="background:var(--success);opacity:0.6;"></div><div class="prog-seg" style="background:var(--success);opacity:0.6;"></div><div class="prog-seg" style="background:var(--success);opacity:0.4;"></div></div>
+          </div>
+          <i class="ti ti-chevron-down chev-icon"></i>
+        </div>
+        <div class="expand">
+          <div class="divider"></div>
+          <div class="canvas-wrap" style="height:120px;"><canvas id="hcanvas-morgan" style="display:block;width:100%;height:100%;pointer-events:none;"></canvas><div class="canvas-overlay"><div style="background:rgba(9,9,15,0.62);border:0.5px solid rgba(255,255,255,0.1);border-radius:8px;padding:4px 11px;"><p style="font-size:10px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:rgba(232,230,240,0.6);">Morgan</p></div></div></div>
+          <div style="padding:11px 15px;"><p class="t-body" style="color:rgba(232,230,240,0.48);font-size:12px;margin-bottom:8px;">Strong alignment on conflict style and life ambition. The conversation reached full reveal — a genuine connection that ran its course.</p><div style="background:var(--surf);border-radius:8px;padding:10px 12px;"><p class="t-caption" style="font-style:italic;margin-bottom:5px;">"You both tend to tackle uncomfortable tasks head-on..."</p><p style="font-size:12px;color:rgba(232,230,240,0.55);line-height:1.55;">"I pushed through a hard conversation when I should have waited."</p></div></div>
+        </div>
+      </div>
+      <!-- JORDAN history -->
+      <div class="hist-card" id="hc-jordan" onclick="toggleHistCard('hc-jordan','hcanvas-jordan')">
+        <div style="padding:13px 15px;display:flex;gap:10px;align-items:flex-start;">
+          <div style="width:38px;height:38px;border-radius:50%;background:rgba(133,183,235,0.12);border:0.5px solid rgba(133,183,235,0.2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:var(--info);flex-shrink:0;">J</div>
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;"><p style="font-size:14px;font-weight:500;color:var(--text-1);margin:0;">Jordan</p><span class="pill">Inactive</span></div>
+            <p class="t-caption" style="margin-bottom:8px;">4 days · closed after inactivity · 6 weeks ago</p>
+            <div class="prog-segs"><div class="prog-seg" style="background:var(--success);opacity:0.6;"></div><div class="prog-seg" style="background:rgba(255,255,255,0.1);"></div><div class="prog-seg" style="background:rgba(255,255,255,0.1);"></div><div class="prog-seg" style="background:rgba(255,255,255,0.1);"></div></div>
+          </div>
+          <i class="ti ti-chevron-down chev-icon"></i>
+        </div>
+        <div class="expand">
+          <div class="divider"></div>
+          <div class="canvas-wrap" style="height:120px;"><canvas id="hcanvas-jordan" style="display:block;width:100%;height:100%;pointer-events:none;"></canvas><div class="canvas-overlay"><div style="background:rgba(9,9,15,0.62);border:0.5px solid rgba(255,255,255,0.1);border-radius:8px;padding:4px 11px;"><p style="font-size:10px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:rgba(232,230,240,0.6);">Jordan</p></div></div></div>
+          <div style="padding:11px 15px;"><p class="t-body" style="color:rgba(232,230,240,0.48);font-size:12px;margin-bottom:8px;">Balanced compatibility across most traits, with strong alignment on core values. Jordan went quiet before the first reveal.</p><div style="background:var(--surf);border-radius:8px;padding:10px 12px;"><p class="t-caption" style="font-style:italic;margin-bottom:5px;">"You both tend to go quiet when overwhelmed..."</p><p style="font-size:12px;color:rgba(232,230,240,0.55);line-height:1.55;">"I shut down when things pile up. It's not intentional, but I know it reads as distance."</p></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="navbar">
+    <button class="nav-item" onclick="go('s-home')"><i class="ti ti-home"></i>Home</button>
+    <button class="nav-item" onclick="go('s-myprofile')"><i class="ti ti-user"></i>Profile</button>
+    <button class="nav-item active"><i class="ti ti-history"></i>History</button>
+    <button class="nav-item" onclick="go('s-settings')"><i class="ti ti-settings"></i>Settings</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+  SCREEN: REPORT
+══════════════════════════════════════════════ -->
+<div id="s-report" class="screen">
+  <div class="topbar">
+    <button onclick="goBack()" style="background:none;border:none;padding:0;"><i class="ti ti-arrow-left" style="font-size:18px;color:var(--text-3);"></i></button>
+    <div style="text-align:center;flex:1;"><p class="topbar-title" id="report-title">Report Morgan</p><p class="t-caption" id="report-step">Step 1 of 3</p></div>
+    <div style="width:28px;"></div>
+  </div>
+  <div class="scroll-body" id="report-body">
+    <!-- injected by JS -->
+  </div>
+</div>
+
+</div><!-- end #app -->
+
+<!-- ══════════════════════════════════════════════
+  JAVASCRIPT
+══════════════════════════════════════════════ -->
+<script>
+// ─── STATE ────────────────────────────────────────────────────
+const STATE = {
+  currentScreen: 's-philosophy',
+  screenHistory: [],
+  onboarded: false,
+  qIndex: 0,
+  qAnswers: {},
+  searchStartTime: null,
+  matchState: 'active', // 'waiting'|'found'|'active'|'reveal'|'pending'|'inactive'
+  conversationMessages: [],
+  msgIndex: 0,
+  reportStep: 1,
+  unreadAlerts: 2,
+  // persist to localStorage
+};
+
+function saveState() {
+  try { localStorage.setItem('im_state', JSON.stringify(STATE)); } catch(e) {}
+}
+function loadState() {
+  try {
+    const s = localStorage.getItem('im_state');
+    if (s) Object.assign(STATE, JSON.parse(s));
+  } catch(e) {}
+}
+
+// ─── ROUTING ──────────────────────────────────────────────────
+function go(screenId, addHistory = true) {
+  const prev = document.getElementById(STATE.currentScreen);
+  const next = document.getElementById(screenId);
+  if (!next) return;
+  if (prev) { stopCanvasesInScreen(prev); prev.classList.remove('active'); }
+  if (addHistory && STATE.currentScreen !== screenId) STATE.screenHistory.push(STATE.currentScreen);
+  STATE.currentScreen = screenId;
+  next.classList.add('active');
+  startCanvasesInScreen(next);
+  onScreenEnter(screenId);
+  saveState();
+}
+
+function goBack() {
+  if (STATE.screenHistory.length > 0) {
+    const prev = STATE.screenHistory.pop();
+    go(prev, false);
+  }
+}
+
+// ─── SCREEN ENTER HOOKS ───────────────────────────────────────
+function onScreenEnter(id) {
+  refreshMyData();
+  if (id === 's-home') renderHome();
+  if (id === 's-conversation') renderConversation();
+  if (id === 's-questionnaire') renderQuestion();
+  if (id === 's-searching') startSearchTimer();
+  if (id === 's-report') renderReport(1);
+  if (id === 's-notifications') updateBadges();
+  updateNavBars(id);
+}
+
+function updateNavBars(id) {
+  document.querySelectorAll('.nav-badge').forEach(b => {
+    b.style.display = STATE.unreadAlerts > 0 ? 'block' : 'none';
+  });
+}
+
+// ─── QUESTIONNAIRE DATA ───────────────────────────────────────
+// 30 questions across 6 dimensions (5 per dimension):
+//   conflict (0-4), emotion (5-9), assert (10-14),
+//   ambition (15-19), social (20-24), spont (25-29)
+// Each answer option has a score 0-3 against the dimension.
+// Higher score = stronger expression of that trait.
+// Scores are averaged across 5 questions per dimension → 0-3 range
+// then normalised to 0-100 for the graphic.
+
+const QUESTIONS = [
+  // ── CONFLICT STYLE (Q1-Q5) ───────────────────────────────────
+  {
+    dim: 'conflict',
+    q: "You and someone close have a disagreement that doesn't get resolved in the conversation. What actually happens next?",
+    hint: "Pick the one most like you — even if it's not your proudest pattern.",
+    opts: [
+      {t:"I need space first — I'll come back when I've processed it alone", s:2},
+      {t:"I want to work through it immediately, even if it takes a while", s:3},
+      {t:"I tend to let it go rather than keep pushing — it usually wasn't worth it", s:1},
+      {t:"It stays with me quietly and surfaces again later in a different argument", s:0}
+    ]
+  },
+  {
+    dim: 'conflict',
+    q: "Someone you respect says something you think is factually wrong in a group setting. What do you do?",
+    hint: "",
+    opts: [
+      {t:"I correct them in the moment — getting it right matters more than the awkwardness", s:3},
+      {t:"I mention it privately afterward", s:2},
+      {t:"I let it go unless it directly affects someone", s:1},
+      {t:"It depends entirely on what's at stake", s:1}
+    ]
+  },
+  {
+    dim: 'conflict',
+    q: "You're upset about something your partner did. They haven't noticed. What's your move?",
+    hint: "The honest version.",
+    opts: [
+      {t:"I tell them directly — I'd rather address it than let it fester", s:3},
+      {t:"I wait and hope they pick up on it", s:1},
+      {t:"I drop hints and see if they connect the dots", s:1},
+      {t:"I talk myself out of it — it probably wasn't a big deal", s:0}
+    ]
+  },
+  {
+    dim: 'conflict',
+    q: "A close friend gives you feedback you didn't ask for and don't agree with. How do you respond?",
+    hint: "",
+    opts: [
+      {t:"I push back — if I disagree, I say so", s:3},
+      {t:"I listen, thank them, and privately discard it", s:2},
+      {t:"I get a bit defensive but come around later if they had a point", s:1},
+      {t:"I take it harder than I let on", s:0}
+    ]
+  },
+  {
+    dim: 'conflict',
+    q: "You and your partner want different things for the weekend. How does it usually get resolved?",
+    hint: "",
+    opts: [
+      {t:"One of us just gives in — usually me", s:0},
+      {t:"We negotiate until we find something that works for both", s:3},
+      {t:"We do our own things and reconnect after", s:2},
+      {t:"It becomes a bigger conversation than the weekend warrants", s:1}
+    ]
+  },
+  // ── EMOTIONAL EXPRESSION (Q6-Q10) ────────────────────────────
+  {
+    dim: 'emotion',
+    q: "Something difficult happens and you're genuinely struggling. Who finds out?",
+    hint: "",
+    opts: [
+      {t:"Almost no one — I process privately until I'm through it", s:0},
+      {t:"The one or two people I fully trust", s:2},
+      {t:"Most people close to me — I don't hide it well", s:3},
+      {t:"It depends on what it is", s:1}
+    ]
+  },
+  {
+    dim: 'emotion',
+    q: "Your partner is having a hard time but hasn't asked for help. What do you do?",
+    hint: "",
+    opts: [
+      {t:"I ask directly what they need", s:3},
+      {t:"I just show up — do something practical without making it a conversation", s:2},
+      {t:"I give them space and make myself available", s:1},
+      {t:"I check in repeatedly until they open up", s:3}
+    ]
+  },
+  {
+    dim: 'emotion',
+    q: "How comfortable are you saying 'I love you' first?",
+    hint: "",
+    opts: [
+      {t:"Very — if I feel it, I say it", s:3},
+      {t:"I'll say it but I need to be sure they feel it too first", s:2},
+      {t:"I find it hard regardless of how I feel", s:0},
+      {t:"I show it more than I say it", s:1}
+    ]
+  },
+  {
+    dim: 'emotion',
+    q: "When you're proud of something you've done, what do you do with that feeling?",
+    hint: "",
+    opts: [
+      {t:"I share it — I want the people I care about to know", s:3},
+      {t:"I keep it mostly private but it fuels me internally", s:1},
+      {t:"I downplay it even when I'm genuinely pleased", s:0},
+      {t:"I look for external validation before I let myself feel it", s:1}
+    ]
+  },
+  {
+    dim: 'emotion',
+    q: "After a serious argument, what does repair look like for you?",
+    hint: "",
+    opts: [
+      {t:"I apologise when I'm wrong and expect the same in return", s:3},
+      {t:"I move on once the immediate tension passes — I don't need a formal resolution", s:1},
+      {t:"I need to talk it through fully before I feel okay", s:3},
+      {t:"I go quiet and come back when I'm ready, usually with some gesture", s:2}
+    ]
+  },
+  // ── ASSERTIVENESS (Q11-Q15) ───────────────────────────────────
+  {
+    dim: 'assert',
+    q: "A friend asks your honest opinion about a decision they've already made. You think it was a mistake. What do you say?",
+    hint: "",
+    opts: [
+      {t:"The truth — they asked, and softening it doesn't help them", s:3},
+      {t:"I focus on making the best of it rather than the decision itself", s:1},
+      {t:"I tell them what I think but frame it carefully", s:2},
+      {t:"I mostly keep it to myself unless there's still time to change course", s:1}
+    ]
+  },
+  {
+    dim: 'assert',
+    q: "You're at a restaurant and your food comes out wrong. What happens?",
+    hint: "",
+    opts: [
+      {t:"I send it back without much thought — it's a normal thing to do", s:3},
+      {t:"I mention it but feel a bit awkward about it", s:2},
+      {t:"I eat it anyway to avoid the interaction", s:0},
+      {t:"It depends on how wrong and how busy they are", s:1}
+    ]
+  },
+  {
+    dim: 'assert',
+    q: "Someone in your life repeatedly crosses a boundary you've set. What do you do?",
+    hint: "",
+    opts: [
+      {t:"I address it directly, again, and make clear there are consequences", s:3},
+      {t:"I pull back from the relationship without necessarily explaining why", s:2},
+      {t:"I tolerate it longer than I should and then overcorrect", s:1},
+      {t:"I try to understand why they're doing it before reacting", s:2}
+    ]
+  },
+  {
+    dim: 'assert',
+    q: "In a group, when you have a strong opinion, what do you typically do with it?",
+    hint: "",
+    opts: [
+      {t:"I put it forward — I'd rather be challenged than silent", s:3},
+      {t:"I share it if asked or if the moment is right", s:2},
+      {t:"I hold back unless I feel confident in the room", s:1},
+      {t:"I'm more comfortable one-on-one than in groups", s:1}
+    ]
+  },
+  {
+    dim: 'assert',
+    q: "You disagree with your manager or someone in authority about a decision. What happens?",
+    hint: "",
+    opts: [
+      {t:"I say something — respectfully, but clearly", s:3},
+      {t:"I raise it once and let it go if they don't change course", s:2},
+      {t:"I keep it to myself and work around it", s:0},
+      {t:"I wait to see if others feel the same before speaking up", s:1}
+    ]
+  },
+  // ── LIFE AMBITION (Q16-Q20) ───────────────────────────────────
+  {
+    dim: 'ambition',
+    q: "Ten years from now, what does a successful life look like to you?",
+    hint: "Not the polished answer. The one you actually think about.",
+    opts: [
+      {t:"I've built something that has my name on it and genuinely matters", s:3},
+      {t:"I'm financially free and have real control over my time", s:2},
+      {t:"The people I love are well and I'm present for them", s:1},
+      {t:"I'm still learning and growing — the destination matters less than momentum", s:2}
+    ]
+  },
+  {
+    dim: 'ambition',
+    q: "When you imagine your ideal relationship, what does it look like structurally?",
+    hint: "",
+    opts: [
+      {t:"Two independent people who choose each other every day", s:3},
+      {t:"A real partnership — decisions made together, lives genuinely intertwined", s:2},
+      {t:"Something that fits into my life without requiring me to reshape it", s:1},
+      {t:"I haven't thought about it in those terms — it'll evolve", s:1}
+    ]
+  },
+  {
+    dim: 'ambition',
+    q: "How much does professional ambition matter to you in a partner?",
+    hint: "",
+    opts: [
+      {t:"A lot — I want someone who's building something too", s:3},
+      {t:"It matters, but it's more about drive than specific achievement", s:2},
+      {t:"Not much — I care more about who they are than what they do", s:0},
+      {t:"It depends on what their ambition looks like day to day", s:1}
+    ]
+  },
+  {
+    dim: 'ambition',
+    q: "When you set a goal, what's your relationship with it?",
+    hint: "",
+    opts: [
+      {t:"I pursue it obsessively until it's done", s:3},
+      {t:"I work toward it steadily but hold it loosely", s:2},
+      {t:"I set them and then lose momentum", s:1},
+      {t:"I'm more motivated by direction than specific destinations", s:2}
+    ]
+  },
+  {
+    dim: 'ambition',
+    q: "How do you feel about making significant life changes — new city, new career, major pivot?",
+    hint: "",
+    opts: [
+      {t:"Energised — inertia is the thing I'm actually afraid of", s:3},
+      {t:"Open, but I need to think it through carefully first", s:2},
+      {t:"Cautious — stability matters to me and I don't disrupt it lightly", s:1},
+      {t:"Terrified but sometimes I do it anyway", s:2}
+    ]
+  },
+  // ── SOCIAL ENERGY (Q21-Q25) ───────────────────────────────────
+  {
+    dim: 'social',
+    q: "It's Friday night after a demanding week. What does the ideal evening look like?",
+    hint: "",
+    opts: [
+      {t:"People — I recharge by being around others", s:3},
+      {t:"One person I can actually talk to, not a crowd", s:2},
+      {t:"Completely alone — I need to decompress before I can be present for anyone", s:0},
+      {t:"It entirely depends on what kind of demanding week it was", s:1}
+    ]
+  },
+  {
+    dim: 'social',
+    q: "How much does your social life matter to you in a relationship?",
+    hint: "",
+    opts: [
+      {t:"A lot — I want a partner who's part of my world and who has their own", s:3},
+      {t:"I'd naturally scale it back for the right person", s:2},
+      {t:"I'm quite private and relationships are where I put most of my social energy", s:1},
+      {t:"I don't really think of it separately — it's all just life", s:1}
+    ]
+  },
+  {
+    dim: 'social',
+    q: "At a party where you don't know many people, what do you actually do?",
+    hint: "",
+    opts: [
+      {t:"Work the room — I find it genuinely easy and enjoyable", s:3},
+      {t:"Find one interesting person and have a real conversation", s:2},
+      {t:"Stick close to whoever I came with and wait to warm up", s:1},
+      {t:"Leave earlier than planned", s:0}
+    ]
+  },
+  {
+    dim: 'social',
+    q: "How much alone time do you need on a regular basis?",
+    hint: "",
+    opts: [
+      {t:"Very little — I get restless on my own for too long", s:3},
+      {t:"Some — maybe a few hours a day", s:2},
+      {t:"A lot — it's not optional, it's how I function", s:0},
+      {t:"It varies wildly depending on what else is happening", s:1}
+    ]
+  },
+  {
+    dim: 'social',
+    q: "How do you feel about a partner who needs more social activity than you do?",
+    hint: "",
+    opts: [
+      {t:"Fine — we can have independent social lives", s:2},
+      {t:"I'd try to keep up but it would probably wear on me", s:1},
+      {t:"It would be a real source of friction over time", s:0},
+      {t:"I'd need to understand what they get from it before I could answer", s:2}
+    ]
+  },
+  // ── SPONTANEITY (Q26-Q30) ─────────────────────────────────────
+  {
+    dim: 'spont',
+    q: "Your weekend plans fall through last minute. What actually happens?",
+    hint: "",
+    opts: [
+      {t:"I make new ones immediately — an empty Saturday doesn't sit well with me", s:0},
+      {t:"I take it as a gift and figure it out as I go", s:3},
+      {t:"I feel briefly adrift and then settle into something low-key", s:2},
+      {t:"I'm relieved, honestly", s:3}
+    ]
+  },
+  {
+    dim: 'spont',
+    q: "How do you feel about surprises in a relationship — spontaneous plans, unexpected gestures?",
+    hint: "",
+    opts: [
+      {t:"I love them — they make life feel alive", s:3},
+      {t:"I appreciate them as long as they don't require me to reorganise", s:2},
+      {t:"I prefer to know what's coming — surprises stress me more than they delight me", s:0},
+      {t:"I like giving them more than receiving them", s:2}
+    ]
+  },
+  {
+    dim: 'spont',
+    q: "You have two weeks off with no obligations. How do you approach it?",
+    hint: "",
+    opts: [
+      {t:"I plan it in detail — an unstructured two weeks would feel like waste", s:0},
+      {t:"I have a loose framework and fill it in as I go", s:2},
+      {t:"I try to plan it and then abandon the plan halfway through", s:2},
+      {t:"I do almost nothing and feel great about it", s:3}
+    ]
+  },
+  {
+    dim: 'spont',
+    q: "How do you make decisions when you don't have full information?",
+    hint: "",
+    opts: [
+      {t:"I move — waiting for certainty usually means waiting forever", s:3},
+      {t:"I gather more until I feel confident enough", s:1},
+      {t:"I delay until something forces my hand", s:1},
+      {t:"I go with whatever feels right in the moment", s:3}
+    ]
+  },
+  {
+    dim: 'spont',
+    q: "Describe who you are — not what you do or where you're from, but how you move through life.",
+    hint: "Take your time with this one. It's the one that matters most.",
+    opts: [],
+    open: true
+  }
+];
+
+// ── SCORING ───────────────────────────────────────────────────
+// Maps answers to dimension scores (0-100) for the personality graphic.
+// Each dimension has 5 questions (4 multiple choice + open text counted separately).
+// Multiple choice: average score 0-3 → normalised to 0-100.
+// Open text (Q30) doesn't score numerically but is stored for display.
+
+function computeScores() {
+  const dims = ['conflict','emotion','assert','ambition','social','spont'];
+  const totals = {conflict:0,emotion:0,assert:0,ambition:0,social:0,spont:0};
+  const counts  = {conflict:0,emotion:0,assert:0,ambition:0,social:0,spont:0};
+
+  QUESTIONS.forEach((q, i) => {
+    if (q.open) return; // skip open text
+    const answer = STATE.qAnswers[i];
+    if (answer === undefined || answer === null) return;
+    const score = q.opts[answer] ? q.opts[answer].s : 0;
+    totals[q.dim] += score;
+    counts[q.dim]++;
+  });
+
+  const result = {};
+  dims.forEach(d => {
+    const n = counts[d];
+    if (n === 0) { result[d] = 50; return; } // default if unanswered
+    // Average 0-3, normalise to 0-100 with a minimum floor of 15
+    result[d] = Math.round(Math.max(15, (totals[d] / (n * 3)) * 100));
+  });
+
+  return result;
+}
+
+// Map dimension names to IDS used by the graphic engine
+function scoresToGraphicData(scores) {
+  return {
+    risk:     scores.conflict,  // conflict style → risk tolerance proxy
+    emotion:  scores.emotion,
+    assert:   scores.assert,
+    ambition: scores.ambition,
+    social:   scores.social,
+    spont:    scores.spont
+  };
+}
+
+function renderQuestion() {
+  const i = STATE.qIndex;
+  const q = QUESTIONS[i];
+  const container = document.getElementById('q-container');
+  const dotsEl = document.getElementById('q-dots');
+  const nextBtn = document.getElementById('q-next-btn');
+  const backBtn = document.getElementById('q-back-btn');
+
+  // dots
+  dotsEl.innerHTML = QUESTIONS.map((_, j) =>
+    `<div class="dot-p${j <= i ? ' done' : ''}"></div>`
+  ).join('');
+
+  // question
+  let html = `<div>
+    <p class="t-label" style="margin-bottom:6px;">Question ${i+1} of ${QUESTIONS.length}</p>
+    <p style="font-size:14px;font-weight:500;color:var(--text-1);margin:0 0 4px;line-height:1.5;">${q.q}</p>
+    ${q.hint ? `<p class="t-caption" style="font-style:italic;margin-bottom:14px;">${q.hint}</p>` : '<div style="height:10px;"></div>'}`;
+
+  if (q.open) {
+    const saved = STATE.qAnswers[i] || '';
+    html += `<textarea class="input" id="open-answer" placeholder="Write your response..." style="min-height:120px;">${saved}</textarea>`;
+  } else {
+    q.opts.forEach((opt, j) => {
+      const sel = STATE.qAnswers[i] === j ? ' selected' : '';
+      const optText = typeof opt === 'object' ? opt.t : opt;
+      html += `<div class="q-opt${sel}" onclick="selectQAnswer(${i},${j},this)"><div class="q-radio"></div><p style="font-size:13px;color:var(--text-1);line-height:1.5;">${optText}</p></div>`;
+    });
+  }
+  html += '</div>';
+  container.innerHTML = html;
+
+  nextBtn.textContent = i === QUESTIONS.length - 1 ? 'Complete questionnaire →' : 'Next question →';
+  backBtn.style.display = i === 0 ? 'none' : 'flex';
+}
+
+function selectQAnswer(qIdx, optIdx, el) {
+  STATE.qAnswers[qIdx] = optIdx;
+  el.parentElement.querySelectorAll('.q-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  saveState();
+}
+
+function nextQuestion() {
+  const q = QUESTIONS[STATE.qIndex];
+  if (q.open) {
+    const ta = document.getElementById('open-answer');
+    if (ta) STATE.qAnswers[STATE.qIndex] = ta.value;
+  }
+  if (STATE.qIndex < QUESTIONS.length - 1) {
+    STATE.qIndex++;
+    renderQuestion();
+  } else {
+    // Compute and store scores before moving on
+    const scores = computeScores();
+    STATE.computedScores = scoresToGraphicData(scores);
+    go('s-photos');
+  }
+  saveState();
+}
+
+function prevQuestion() {
+  if (STATE.qIndex > 0) { STATE.qIndex--; renderQuestion(); }
+}
+
+// ─── SEARCHING / 2-HOUR TIMER ─────────────────────────────────
+function startSearching() {
+  STATE.searchStartTime = Date.now();
+  // For demo: after 8 seconds pretend match found but keep on screen
+  // Real impl: minimum 2 hours (7200000ms) before revealing
+  saveState();
+  go('s-searching');
+  setTimeout(checkSearchTimer, 500);
+}
+
+function checkSearchTimer() {
+  if (STATE.currentScreen !== 's-searching') return;
+  const elapsed = Date.now() - (STATE.searchStartTime || Date.now());
+  const MINIMUM_MS = 8000; // Demo: 8s — production: 7200000 (2 hours)
+  const remaining = Math.max(0, MINIMUM_MS - elapsed);
+  const statusEl = document.getElementById('searching-status');
+  if (statusEl) {
+    if (remaining > 0) {
+      const secs = Math.ceil(remaining / 1000);
+      statusEl.textContent = secs > 60
+        ? `Searching carefully — about ${Math.ceil(secs/60)} minutes remaining`
+        : `Almost there...`;
+      setTimeout(checkSearchTimer, 500);
+    } else {
+      statusEl.textContent = '';
+      STATE.matchState = 'found';
+      STATE.onboarded = true;
+      saveState();
+      setTimeout(() => go('s-home'), 600);
+    }
+  }
+}
+
+// ─── HOME SCREEN RENDERER ─────────────────────────────────────
+function renderHome() {
+  const body = document.getElementById('home-body');
+  const state = STATE.matchState;
+
+  if (state === 'found') {
+    body.innerHTML = `
+    <div style="padding:20px;display:flex;flex-direction:column;gap:14px;">
+      <div style="text-align:center;">
+        <div style="display:inline-flex;align-items:center;gap:7px;background:rgba(93,202,165,0.1);border:0.5px solid rgba(93,202,165,0.25);border-radius:20px;padding:5px 14px;font-size:11px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--success);">
+          <i class="ti ti-sparkles" style="font-size:12px;"></i>Your match is ready
+        </div>
+      </div>
+      <div class="card-raised">
+        <p class="t-label" style="margin-bottom:6px;">We found someone for you</p>
+        <p class="t-body" style="color:rgba(232,230,240,0.55);margin-bottom:14px;">Take your time reading the compatibility below. There's no clock on this.</p>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:12px;color:var(--text-2);min-width:130px;">Conflict style</span><div class="compat-wrap"><div class="compat-fill" style="width:91%;background:#E24B4A;"></div></div><span style="font-size:11px;color:#E24B4A;min-width:44px;text-align:right;">Strong</span></div>
+          <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:12px;color:var(--text-2);min-width:130px;">Life ambition</span><div class="compat-wrap"><div class="compat-fill" style="width:85%;background:#E24B4A;"></div></div><span style="font-size:11px;color:#E24B4A;min-width:44px;text-align:right;">Strong</span></div>
+          <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:12px;color:var(--text-2);min-width:130px;">Core values</span><div class="compat-wrap"><div class="compat-fill" style="width:74%;background:#EF9F27;"></div></div><span style="font-size:11px;color:#EF9F27;min-width:44px;text-align:right;">Close</span></div>
+          <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:12px;color:var(--text-2);min-width:130px;">Spontaneity</span><div class="compat-wrap"><div class="compat-fill" style="width:36%;background:#85B7EB;"></div></div><span style="font-size:11px;color:#85B7EB;min-width:44px;text-align:right;">Contrast</span></div>
+        </div>
+        <button class="btn btn-primary" onclick="advanceToActive();go('s-match-profile')">See your full compatibility \u2192</button>
+      </div>
+    </div>`;
+  } else if (state === 'waiting') {
+    body.innerHTML = `
+    <div style="padding:28px 20px;display:flex;flex-direction:column;align-items:center;gap:20px;text-align:center;">
+      <div style="width:64px;height:64px;border-radius:50%;border:0.5px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;"><i class="ti ti-search" style="font-size:26px;color:var(--text-3);"></i></div>
+      <div><p class="t-heading" style="margin-bottom:8px;">Looking for your match</p><p class="t-body" style="color:rgba(232,230,240,0.45);max-width:260px;margin:0 auto;">We're working carefully. Good matches take time.</p></div>
+      <div class="card" style="width:100%;text-align:left;">
+        <div class="card-pad">
+          <p class="t-label" style="margin-bottom:10px;">Your profile is complete</p>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;align-items:center;gap:8px;"><i class="ti ti-check" style="font-size:13px;color:var(--success);"></i><p class="t-body" style="color:rgba(232,230,240,0.6);">Personality questionnaire</p></div>
+            <div style="display:flex;align-items:center;gap:8px;"><i class="ti ti-check" style="font-size:13px;color:var(--success);"></i><p class="t-body" style="color:rgba(232,230,240,0.6);">Highlight photo set</p></div>
+            <div style="display:flex;align-items:center;gap:8px;"><i class="ti ti-check" style="font-size:13px;color:var(--success);"></i><p class="t-body" style="color:rgba(232,230,240,0.6);">Relationship intentions confirmed</p></div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  } else if (state === 'active' || state === 'reveal') {
+    const msgs = STATE.conversationMessages;
+    const lastMsg = msgs.length > 0 ? msgs[msgs.length-1] : null;
+    const lastText = lastMsg ? lastMsg.text : 'Ha — exhausted yourself into vulnerability. That\'s actually a very honest thing to admit.';
+    const isReveal = state === 'reveal';
+    body.innerHTML = `
+    <div style="padding:20px;display:flex;flex-direction:column;gap:14px;">
+      <div class="card-raised">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+          <div style="width:42px;height:42px;border-radius:50%;background:rgba(239,159,39,0.15);border:0.5px solid rgba(239,159,39,0.3);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;color:var(--c-warn);flex-shrink:0;">M</div>
+          <div style="flex:1;" onclick="go('s-match-profile')" style="cursor:pointer;"><p class="t-heading" style="margin-bottom:2px;">Morgan</p><p class="t-caption">${isReveal ? '✦ shared something new with you' : 'replied recently'}</p></div>
+          <div style="width:7px;height:7px;border-radius:50%;background:var(--success);"></div>
+        </div>
+        ${isReveal ? `
+        <div style="background:rgba(93,202,165,0.08);border:0.5px solid rgba(93,202,165,0.2);border-radius:10px;padding:11px 14px;margin-bottom:14px;"><p class="t-body" style="color:rgba(232,230,240,0.7);">Your conversation unlocked a new reveal. See it when you're ready — there's no rush.</p></div>
+        ` : `
+        <div style="background:var(--surf);border-radius:10px;padding:11px 14px;margin-bottom:14px;"><p class="t-body" style="font-style:italic;color:rgba(232,230,240,0.55);">"${lastText}"</p></div>
+        `}
+        <button class="btn btn-primary" onclick="go('s-conversation')">${isReveal ? '<i class="ti ti-eye" style="font-size:14px;"></i>See what they shared' : '<i class="ti ti-message" style="font-size:14px;"></i>Continue the conversation'}</button>
+      </div>
+      <div class="card">
+        <div class="card-pad">
+          <p class="t-label" style="margin-bottom:12px;">Where you are</p>
+          <div style="display:flex;align-items:center;">
+            <div class="journey-dot done"><i class="ti ti-check" style="font-size:12px;color:var(--success);"></i></div>
+            <div class="journey-line" style="background:rgba(93,202,165,0.4);"></div>
+            <div class="journey-dot done"><i class="ti ti-check" style="font-size:12px;color:var(--success);"></i></div>
+            <div class="journey-line" style="background:rgba(255,255,255,0.08);"></div>
+            <div class="journey-dot ${isReveal ? 'done' : ''}"><i class="ti ti-eye" style="font-size:12px;color:${isReveal ? 'var(--success)' : 'rgba(232,230,240,0.25)'};"></i></div>
+            <div class="journey-line" style="background:rgba(255,255,255,0.08);"></div>
+            <div class="journey-dot"><i class="ti ti-heart" style="font-size:12px;color:rgba(232,230,240,0.25);"></i></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:6px;"><p class="t-caption">Matched</p><p class="t-caption">Talking</p><p class="t-caption">First look</p><p class="t-caption">Full reveal</p></div>
+        </div>
+      </div>
+      <button class="btn btn-secondary" onclick="go('s-history')" style="width:auto;padding:10px 18px;font-size:12px;"><i class="ti ti-history" style="font-size:13px;"></i>Conversation history</button>
+    </div>`;
+  } else if (state === 'inactive') {
+    body.innerHTML = `
+    <div style="padding:20px;display:flex;flex-direction:column;gap:14px;">
+      <div class="inactive-card">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+          <div style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;color:var(--text-3);opacity:0.6;flex-shrink:0;">M</div>
+          <button onclick="go('s-match-profile')" style="background:none;border:none;padding:0;text-align:left;cursor:pointer;"><p class="t-heading" style="margin-bottom:2px;">Morgan</p><p class="t-caption" style="display:flex;align-items:center;gap:4px;"><i class="ti ti-moon" style="font-size:12px;"></i>hasn't been active for 3 days</p></button>
+        </div>
+        <div style="background:var(--surf);border-radius:10px;padding:12px 14px;margin-bottom:14px;"><p class="t-body" style="color:rgba(232,230,240,0.55);">Morgan hasn't opened the app in 3 days. You can wait a bit more, or close this match and let us find someone new. Either choice is valid.</p></div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
+          <div style="display:flex;align-items:flex-start;gap:10px;background:var(--surf);border-radius:10px;padding:12px 14px;">
+            <i class="ti ti-clock" style="font-size:16px;color:var(--text-3);margin-top:1px;flex-shrink:0;"></i>
+            <div><p style="font-size:13px;font-weight:500;color:var(--text-1);margin:0 0 3px;">Wait a bit more</p><p class="t-caption" style="line-height:1.5;">The match stays open for 3 more days. You can close it at any time.</p></div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:10px;background:var(--surf);border-radius:10px;padding:12px 14px;">
+            <i class="ti ti-arrow-right" style="font-size:16px;color:var(--text-3);margin-top:1px;flex-shrink:0;"></i>
+            <div><p style="font-size:13px;font-weight:500;color:var(--text-1);margin:0 0 3px;">Close this match</p><p class="t-caption" style="line-height:1.5;">We'll start looking for your next match. Your conversation is saved in history.</p></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn btn-primary btn-inline" onclick="inactiveWait()">Wait a bit more</button>
+          <button class="btn btn-secondary btn-inline" onclick="showCloseGate()">Close match</button>
+        </div>
+        <div id="close-gate" style="display:none;margin-top:14px;background:var(--surf-raised);border-radius:10px;padding:14px;">
+          <p style="font-size:14px;font-weight:500;color:var(--text-1);margin:0 0 8px;">Just before you go</p>
+          <p class="t-body" style="color:rgba(232,230,240,0.55);margin-bottom:14px;">The conversation you had was real. Are you sure you want to move on?</p>
+          <div style="display:flex;gap:10px;">
+            <button class="btn btn-secondary btn-inline" onclick="confirmClose()">Yes, move on</button>
+            <button class="btn btn-primary btn-inline" onclick="hideCloseGate()">Stay in this match</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
+}
+
+
+function advanceToActive() {
+  if (STATE.matchState === 'found') {
+    STATE.matchState = 'active';
+    saveState();
+  }
+}
+function inactiveWait() {
+  STATE.matchState = 'active';
+  saveState();
+  renderHome();
+}
+function showCloseGate() { const g = document.getElementById('close-gate'); if(g) g.style.display='block'; }
+function hideCloseGate() { const g = document.getElementById('close-gate'); if(g) g.style.display='none'; }
+function confirmClose() {
+  STATE.matchState = 'waiting';
+  saveState();
+  renderHome();
+}
+
+// ─── CONVERSATION ─────────────────────────────────────────────
+const SCRIPTED_CONVERSATION = [
+  {from:'them', text:"What made you realise you were doing it too?"},
+  {from:'them', text:"Ha — exhausted yourself into vulnerability. That's actually a very honest thing to admit."},
+  {from:'them', text:"Same. I think that's why I over-communicate sometimes — it's not for the other person, it's to stop the quiet from getting too loud."},
+  {from:'them', text:"What does that noise usually look like for you? Busyness, or more like talking?"},
+  {from:'them', text:"That's interesting — so busyness is the first defence and talking is what's left when that runs out."},
+  {from:'them', text:"I find that when I'm really struggling I go completely the other way. I get very still. Almost eerie to people who know me."},
+  {from:'them', text:"It scares me a little how well that matches how I'd describe myself. What made you download this app?"},
+];
+
+const OPENING_EXCHANGE = {
+  prompt: '"You both tend to tackle uncomfortable tasks head-on..."',
+  you: "I pushed through a hard conversation when I should have waited. Said things I had to walk back later.",
+  them: "I've learned to ask myself whether I'm ready to have the conversation, or just want to feel like I did something."
+};
+
+function initConversation() {
+  if (STATE.conversationMessages.length === 0) {
+    STATE.conversationMessages = [
+      {from:'them', text: SCRIPTED_CONVERSATION[0].text},
+    ];
+    STATE.msgIndex = 0;
+    saveState();
+  }
+}
+
+function renderConversation() {
+  initConversation();
+  const body = document.getElementById('conv-body');
+  let html = '';
+
+  // pinned opening exchange
+  html += `<div style="background:var(--surf);border:0.5px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:4px;">
+    <p class="t-label" style="margin-bottom:6px;display:flex;align-items:center;gap:5px;"><i class="ti ti-messages" style="font-size:11px;"></i>How you started</p>
+    <p class="t-caption" style="font-style:italic;margin-bottom:8px;">${OPENING_EXCHANGE.prompt}</p>
+    <div style="display:flex;gap:7px;margin-bottom:6px;">
+      <div class="avatar" style="background:rgba(133,183,235,0.12);color:var(--info);">Y</div>
+      <p style="font-size:11px;color:rgba(232,230,240,0.55);background:rgba(133,183,235,0.07);border-radius:2px 8px 8px 8px;padding:7px 10px;line-height:1.5;">${OPENING_EXCHANGE.you}</p>
+    </div>
+    <div style="display:flex;gap:7px;flex-direction:row-reverse;">
+      <div class="avatar" style="background:rgba(239,159,39,0.12);color:var(--c-warn);">M</div>
+      <p style="font-size:11px;color:rgba(232,230,240,0.55);background:rgba(239,159,39,0.07);border-radius:8px 2px 8px 8px;padding:7px 10px;line-height:1.5;">${OPENING_EXCHANGE.them}</p>
+    </div>
+  </div>
+  <div style="height:0.5px;background:rgba(255,255,255,0.06);margin:2px 0;"></div>`;
+
+  // messages
+  STATE.conversationMessages.forEach((msg, idx) => {
+    if (msg.from === 'them') {
+      html += `<div style="display:flex;gap:8px;flex-direction:row-reverse;">
+        <div class="avatar" style="background:rgba(239,159,39,0.12);color:var(--c-warn);">M</div>
+        <p class="bubble-them">${msg.text}</p>
+      </div>`;
+    } else {
+      html += `<div style="display:flex;gap:8px;">
+        <div class="avatar" style="background:rgba(133,183,235,0.12);color:var(--info);">Y</div>
+        <p class="bubble-you">${msg.text}</p>
+      </div>`;
+    }
+
+    // after msg 2 from them, show reveal strip
+    if (idx === 1 && msg.from === 'them') {
+      html += `<div class="reveal-strip">
+        <div class="reveal-strip-line"></div>
+        <div class="reveal-strip-label"><i class="ti ti-eye" style="font-size:11px;"></i>Morgan shared something with you</div>
+        <div class="reveal-strip-line"></div>
+      </div>
+      <div style="background:var(--surf);border:0.5px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;gap:10px;align-items:center;">
+        <div style="width:44px;height:44px;border-radius:8px;overflow:hidden;flex-shrink:0;">
+          <svg width="44" height="44" viewBox="0 0 44 44"><rect width="44" height="44" fill="#111120"/><ellipse cx="22" cy="17" rx="10" ry="11" fill="#1e1e38"/><ellipse cx="22" cy="40" rx="18" ry="13" fill="#181830"/><ellipse cx="17" cy="14" rx="3" ry="3.5" fill="#3a3a6a"/><ellipse cx="27" cy="14" rx="3" ry="3.5" fill="#3a3a6a"/></svg>
+        </div>
+        <div><p style="font-size:13px;font-weight:500;color:var(--text-1);margin:0 0 2px;">Something they chose to show first</p><p class="t-caption">The conversation brought you here.</p></div>
+      </div>`;
+      if (STATE.matchState !== 'reveal') {
+        STATE.matchState = 'reveal';
+        saveState();
+      }
+    }
+  });
+
+  html += `<p class="t-caption" style="text-align:center;padding:4px 0;">just now</p>`;
+  body.innerHTML = html;
+  body.scrollTop = body.scrollHeight;
+}
+
+function sendMessage() {
+  const input = document.getElementById('msg-input');
+  const text = input.value.trim();
+  if (!text) return;
+  STATE.conversationMessages.push({from:'you', text});
+  input.value = '';
+
+  // auto-reply after delay
+  const nextMsgIdx = STATE.msgIndex + 1;
+  if (nextMsgIdx < SCRIPTED_CONVERSATION.length) {
+    STATE.msgIndex = nextMsgIdx;
+    setTimeout(() => {
+      STATE.conversationMessages.push({from:'them', text: SCRIPTED_CONVERSATION[nextMsgIdx].text});
+      STATE.unreadAlerts = 1;
+      saveState();
+      if (STATE.currentScreen === 's-conversation') renderConversation();
+      updateBadges();
+    }, 1200 + Math.random() * 1400);
+  }
+  saveState();
+  renderConversation();
+}
+
+function handleMsgKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function submitOpening() {
+  const resp = document.getElementById('opening-response');
+  if (resp && resp.value.trim()) {
+    STATE.conversationMessages = [{from:'them', text: SCRIPTED_CONVERSATION[0].text}];
+    STATE.msgIndex = 0;
+    saveState();
+    go('s-conversation');
+  }
+}
+
+// ─── REPORT FLOW ──────────────────────────────────────────────
+function renderReport(step) {
+  STATE.reportStep = step;
+  const body = document.getElementById('report-body');
+  const title = document.getElementById('report-title');
+  const stepEl = document.getElementById('report-step');
+  if (title) title.textContent = step <= 2 ? 'Report Morgan' : step === 3 ? 'Report submitted' : 'You\'re all set';
+  if (stepEl) stepEl.textContent = step <= 3 ? `Step ${step} of 3` : '';
+
+  if (step === 1) {
+    body.innerHTML = `<div style="padding:20px;display:flex;flex-direction:column;gap:14px;">
+      <div class="card-raised"><p class="t-body" style="color:rgba(232,230,240,0.55);">We're sorry something has made you want to do this. Your report is reviewed by a real person — not an algorithm.</p></div>
+      <div>
+        <p style="font-size:13px;font-weight:500;color:var(--text-1);margin:0 0 12px;">What best describes what happened?</p>
+        <div class="q-opt" onclick="selectQ(this,'report')"><div class="q-radio"></div><div><p style="font-size:13px;font-weight:500;color:var(--text-1);margin:0 0 2px;">Something they said made me uncomfortable</p><p class="t-caption">Their messages crossed a line or felt inappropriate</p></div></div>
+        <div class="q-opt" onclick="selectQ(this,'report')"><div class="q-radio"></div><div><p style="font-size:13px;font-weight:500;color:var(--text-1);margin:0 0 2px;">I feel unsafe or harassed</p><p class="t-caption">This is serious and I need it addressed urgently</p></div></div>
+        <div class="q-opt" onclick="selectQ(this,'report')"><div class="q-radio"></div><div><p style="font-size:13px;font-weight:500;color:var(--text-1);margin:0 0 2px;">Their profile doesn't seem genuine</p><p class="t-caption">Fake identity, misleading information, or impersonation</p></div></div>
+        <div class="q-opt" onclick="selectQ(this,'report')"><div class="q-radio"></div><div><p style="font-size:13px;font-weight:500;color:var(--text-1);margin:0 0 2px;">They asked for money or personal information</p><p class="t-caption">Financial requests or suspicious links</p></div></div>
+        <div class="q-opt" onclick="selectQ(this,'report')"><div class="q-radio"></div><p style="font-size:13px;color:var(--text-1);">Something else</p></div>
+      </div>
+      <p class="t-caption" style="line-height:1.6;">If you're in immediate danger, please contact emergency services first.</p>
+      <button class="btn btn-primary" onclick="renderReport(2)">Continue →</button>
+    </div>`;
+  } else if (step === 2) {
+    body.innerHTML = `<div style="padding:20px;display:flex;flex-direction:column;gap:14px;">
+      <div class="card-raised"><p class="t-body" style="color:rgba(232,230,240,0.55);">You don't have to write anything here if you'd rather not. But if there's something specific you want us to know, this is the place.</p></div>
+      <div>
+        <p style="font-size:13px;font-weight:500;color:var(--text-1);margin:0 0 10px;">Tell us what happened <span style="font-weight:400;color:var(--text-3);">(optional)</span></p>
+        <textarea class="input" placeholder="Write your response..." style="min-height:96px;"></textarea>
+      </div>
+      <div class="q-opt" onclick="this.classList.toggle('selected');this.querySelector('.q-radio').style.background=this.classList.contains('selected')?'var(--text-1)':''">
+        <div class="q-radio"></div>
+        <div><p style="font-size:13px;color:var(--text-1);margin:0 0 2px;">Attach conversation as evidence</p><p class="t-caption">Helps our review team. Stays confidential.</p></div>
+      </div>
+      <div style="background:var(--surf);border-radius:10px;padding:12px 14px;border:0.5px solid var(--border-dim);"><p class="t-caption" style="line-height:1.6;">Reviewed by a real person on our trust and safety team — not an automated system. We aim to follow up within 24 hours.</p></div>
+      <button class="btn btn-primary" onclick="renderReport(3)">Submit report →</button>
+      <button class="btn btn-secondary" onclick="renderReport(1)">← Go back</button>
+    </div>`;
+  } else if (step === 3) {
+    body.innerHTML = `<div style="padding:20px;display:flex;flex-direction:column;gap:14px;">
+      <div style="text-align:center;padding:8px 0;">
+        <div style="width:48px;height:48px;border-radius:50%;background:var(--success-bg);border:0.5px solid rgba(93,202,165,0.25);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;"><i class="ti ti-check" style="font-size:22px;color:var(--success);"></i></div>
+        <p class="t-heading" style="margin-bottom:6px;">Your report is in</p>
+        <p class="t-body" style="color:rgba(232,230,240,0.45);max-width:260px;margin:0 auto;">A member of our safety team will review this within 24 hours.</p>
+      </div>
+      <div class="card-raised">
+        <p style="font-size:13px;font-weight:500;color:var(--text-1);margin:0 0 8px;">Do you also want to block Morgan?</p>
+        <p class="t-body" style="color:rgba(232,230,240,0.5);margin-bottom:16px;">Blocking means Morgan won't be able to contact you again and this match will end permanently.</p>
+        <div style="display:flex;gap:10px;">
+          <button class="btn btn-danger btn-inline" onclick="renderReport(4)">Block Morgan</button>
+          <button class="btn btn-ghost btn-inline" onclick="renderReport(4)">Not right now</button>
+        </div>
+      </div>
+      <div style="background:var(--surf);border-radius:10px;padding:12px 14px;border:0.5px solid var(--border-dim);"><p class="t-caption" style="line-height:1.6;">Whether you block or not, your report has been received. Our team will act on it regardless.</p></div>
+    </div>`;
+  } else if (step === 4) {
+    body.innerHTML = `<div style="padding:28px 20px;display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center;">
+      <div style="width:52px;height:52px;border-radius:50%;background:var(--surf);border:0.5px solid var(--border);display:flex;align-items:center;justify-content:center;"><i class="ti ti-shield-check" style="font-size:24px;color:rgba(232,230,240,0.4);"></i></div>
+      <div><p class="t-heading" style="margin-bottom:8px;">Thank you for telling us</p><p class="t-body" style="color:rgba(232,230,240,0.45);max-width:280px;margin:0 auto;">Reports like yours help keep this a place where real connections can happen safely. We'll be in touch within 24 hours.</p></div>
+      <div class="card" style="width:100%;text-align:left;">
+        <div class="card-pad">
+          <p class="t-label" style="margin-bottom:12px;">What happens next</p>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div style="display:flex;align-items:flex-start;gap:10px;"><div style="width:22px;height:22px;border-radius:50%;background:var(--surf-raised);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--text-2);flex-shrink:0;">1</div><p class="t-body" style="font-size:12px;color:rgba(232,230,240,0.5);">A real person reviews your report — not an automated filter</p></div>
+            <div style="display:flex;align-items:flex-start;gap:10px;"><div style="width:22px;height:22px;border-radius:50%;background:var(--surf-raised);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--text-2);flex-shrink:0;">2</div><p class="t-body" style="font-size:12px;color:rgba(232,230,240,0.5);">We contact you within 24 hours with the outcome</p></div>
+            <div style="display:flex;align-items:flex-start;gap:10px;"><div style="width:22px;height:22px;border-radius:50%;background:var(--surf-raised);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--text-2);flex-shrink:0;">3</div><p class="t-body" style="font-size:12px;color:rgba(232,230,240,0.5);">If action is taken, you'll be informed — without sharing private details</p></div>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="go('s-home')" style="width:100%;">Return to home</button>
+    </div>`;
+  }
+}
+
+// ─── MISC UI ──────────────────────────────────────────────────
+function selectQ(el, group) {
+  el.parentElement.querySelectorAll('.q-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function toggleResetWarning() {
+  const w = document.getElementById('reset-warning');
+  if (w) w.style.display = w.style.display === 'none' ? 'block' : 'none';
+}
+
+function markAllRead() {
+  STATE.unreadAlerts = 0;
+  saveState();
+  document.querySelectorAll('.notif-item.unread').forEach(n => n.classList.remove('unread'));
+  document.querySelectorAll('.unread-dot').forEach(d => d.style.display='none');
+  updateBadges();
+}
+
+function updateBadges() {
+  document.querySelectorAll('.nav-badge').forEach(b => {
+    b.style.display = STATE.unreadAlerts > 0 ? 'block' : 'none';
+  });
+}
+
+
+// ─── MATCH PROFILE CANVAS ─────────────────────────────────────
+// Both fields (yours + Morgan's) are built ONCE from their own scores.
+// buildField places each trait's cluster using:
+//   X = fixed column position (traits spread L→R)
+//   Y = driven by that person's score (high=top, low=bottom, narrow band)
+//   Spread/count/brightness all scale exponentially with score.
+// The overlap is purely additive — ghost drawn behind, foreground on top.
+// Nothing ever moves or rebuilds when toggling overlap or switching person.
+
+const TRAIT_NAMES_SHORT = ['Risk','Emotion','Assertiveness','Ambition','Social energy','Spontaneity'];
+const ALIGN = ['shared','shared','divergent','shared','shared','divergent'];
+// IDS order: risk, emotion, assert, ambition, social, spont
+// Shared (red): risk, emotion, assertiveness, ambition
+// Divergent (blue): social energy, spontaneity
+
+let _overlapOn = false;
+let _overlapProgress = 0;
+let _overlapTarget = 0;
+const FADE_SPEED = 0.022;
+
+// Pre-built dot sets — never change after first build
+let _youFieldDots = null;
+let _morganFieldDots = null;
+let _mpW = 0, _mpH = 0;
+
+function buildField(W, H, data, seedOff) {
+  const X_MIN = 0.18, X_RANGE = 0.64;
+  const Y_MID = 0.50, Y_RANGE = 0.28;
+  const dots = [];
+  TRAITS.forEach((tr, ti) => {
+    const val  = (data[IDS[ti]] || 50) / 100;
+    const v20  = Math.pow(val, 2.0);
+    const v16  = Math.pow(val, 1.6);
+    const v08  = Math.pow(val, 0.8);
+    const col  = ti / (TRAITS.length - 1);
+    const cx   = (X_MIN + col * X_RANGE) * W;
+    const cy   = (Y_MID + (0.5 - val) * Y_RANGE) * H;
+    const N    = Math.max(8, Math.round(v20 * 62));
+    const spX  = Math.max(0.09 * W, v16 * 0.20 * W);
+    const spY  = Math.max(0.08 * H, v16 * 0.18 * H);
+    const tR   = ALIGN[ti] === 'shared' ? 226 : 133;
+    const tG   = ALIGN[ti] === 'shared' ?  75 : 183;
+    const tB   = ALIGN[ti] === 'shared' ?  74 : 235;
+    for (let i = 0; i < N; i++) {
+      const r  = sr(ti*5000 + i*61 + 13 + seedOff);
+      const gx = (r()+r()+r()+r()-2) / 2;
+      const gy = (r()+r()+r()+r()-2) / 2;
+      dots.push({
+        ox: cx + gx * spX,
+        oy: cy + gy * spY,
+        r:  Math.max(1.0, 0.5 + r()*2.1*val),
+        tr, tR, tG, tB, ti,
+        f1:0.0016+r()*0.0012, f2:0.0011+r()*0.0009, f3:0.0007+r()*0.0005,
+        p1:r()*Math.PI*2, p2:r()*Math.PI*2, p3:r()*Math.PI*2,
+        a1:(5+r()*7)*Math.max(0.25,val),
+        a2:(3+r()*5)*Math.max(0.25,val),
+        a3:(2+r()*3)*Math.max(0.25,val),
+        baseAlpha: Math.max(0.28, 0.1 + v08*0.78),
+      });
+    }
+  });
+  return dots;
+}
+
+function ensureMatchProfileDots(W, H) {
+  if (W === _mpW && H === _mpH) return;
+  _mpW = W; _mpH = H;
+  _youFieldDots    = buildField(W, H, MY_DATA,    0);
+  _morganFieldDots = buildField(W, H, MATCH_DATA, 7777);
+}
+
+function drawFieldLabels(ctx, W, H, data, p) {
+  const X_MIN = 0.18, X_RANGE = 0.64;
+  const Y_MID = 0.50, Y_RANGE = 0.28;
+  ctx.font = '500 10px DM Sans, system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'bottom';
+  TRAITS.forEach((tr, ti) => {
+    const val  = (data[IDS[ti]] || 50) / 100;
+    const v16  = Math.pow(val, 1.6);
+    const col  = ti / (TRAITS.length - 1);
+    const cx   = (X_MIN + col * X_RANGE) * W;
+    const cy   = (Y_MID + (0.5 - val) * Y_RANGE) * H;
+    const spY  = Math.max(0.08*H, v16*0.18*H);
+    const lY   = cy - spY - 4;
+    const tR   = ALIGN[ti] === 'shared' ? 226 : 133;
+    const tG   = ALIGN[ti] === 'shared' ?  75 : 183;
+    const tB   = ALIGN[ti] === 'shared' ?  74 : 235;
+    const r    = Math.round(tr.r + (tR - tr.r) * p);
+    const g    = Math.round(tr.g + (tG - tr.g) * p);
+    const b    = Math.round(tr.b + (tB - tr.b) * p);
+    const nm   = TRAIT_NAMES_SHORT[ti];
+    const tw   = ctx.measureText(nm).width;
+    const pad=5, rx=4, bh=13, bx=cx-tw/2-pad, by=lY-bh;
+    ctx.fillStyle = 'rgba(9,9,15,0.75)';
+    ctx.beginPath();
+    ctx.moveTo(bx+rx,by); ctx.lineTo(bx+tw+pad*2-rx,by);
+    ctx.quadraticCurveTo(bx+tw+pad*2,by,bx+tw+pad*2,by+rx);
+    ctx.lineTo(bx+tw+pad*2,by+bh-rx);
+    ctx.quadraticCurveTo(bx+tw+pad*2,by+bh,bx+tw+pad*2-rx,by+bh);
+    ctx.lineTo(bx+rx,by+bh); ctx.quadraticCurveTo(bx,by+bh,bx,by+bh-rx);
+    ctx.lineTo(bx,by+rx); ctx.quadraticCurveTo(bx,by,bx+rx,by);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = `rgba(${r},${g},${b},0.9)`;
+    ctx.fillText(nm, cx, lY);
+  });
+}
+
+function runMatchProfileCanvas() {
+  const canvasId = 'c-match-profile';
+  if (CANVAS_ANIMS[canvasId]) return;
+  const cv = document.getElementById(canvasId);
+  if (!cv) return;
+  const W = cv.offsetWidth || 380, H = cv.offsetHeight || 300;
+  cv.width = W; cv.height = H;
+  ensureMatchProfileDots(W, H);
+
+  let t = 0;
+  function frame() {
+    t++;
+    if (_overlapProgress < _overlapTarget) _overlapProgress = Math.min(_overlapTarget, _overlapProgress + FADE_SPEED);
+    else if (_overlapProgress > _overlapTarget) _overlapProgress = Math.max(_overlapTarget, _overlapProgress - FADE_SPEED);
+    const p = _overlapProgress;
+
+    const ctx = cv.getContext('2d');
+    ctx.fillStyle = '#09090f'; ctx.fillRect(0, 0, W, H);
+
+    // Ghost (Morgan) — drawn behind, fades in with p, stays white
+    if (p > 0.01) {
+      _morganFieldDots.forEach(d => {
+        const wx = Math.sin(t*d.f1+d.p1)*d.a1+Math.cos(t*d.f2+d.p2)*d.a2*0.6+Math.sin(t*d.f3+d.p3)*d.a3*0.4;
+        const wy = Math.cos(t*d.f1+d.p2)*d.a2+Math.sin(t*d.f2+d.p1)*d.a1*0.5+Math.cos(t*d.f3+d.p3)*d.a3*0.4;
+        const breathe = 0.5 + 0.5*Math.sin(t*d.f1*1.6+d.p1);
+        ctx.beginPath();
+        ctx.arc(d.ox+wx, d.oy+wy, Math.max(0.3, d.r*(0.5+0.5*breathe)*0.85), 0, Math.PI*2);
+        ctx.fillStyle = `rgba(255,255,255,${0.18*breathe*p})`;
+        ctx.fill();
+      });
+    }
+
+    // Your field (foreground) — color cross-fades to red/blue with p
+    _youFieldDots.forEach(d => {
+      const wx = Math.sin(t*d.f1+d.p1)*d.a1+Math.cos(t*d.f2+d.p2)*d.a2*0.6+Math.sin(t*d.f3+d.p3)*d.a3*0.4;
+      const wy = Math.cos(t*d.f1+d.p2)*d.a2+Math.sin(t*d.f2+d.p1)*d.a1*0.5+Math.cos(t*d.f3+d.p3)*d.a3*0.4;
+      const breathe = 0.5 + 0.5*Math.sin(t*d.f1*1.6+d.p1);
+      const alpha = Math.min(1, d.baseAlpha*(0.5+0.5*breathe));
+      const r = Math.round(d.tr.r + (d.tR - d.tr.r) * p);
+      const g = Math.round(d.tr.g + (d.tG - d.tr.g) * p);
+      const b = Math.round(d.tr.b + (d.tB - d.tr.b) * p);
+      ctx.beginPath();
+      ctx.arc(d.ox+wx, d.oy+wy, Math.max(0.3, d.r*(0.5+0.5*breathe)), 0, Math.PI*2);
+      ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
+      ctx.fill();
+    });
+
+    drawFieldLabels(ctx, W, H, MY_DATA, p);
+    CANVAS_ANIMS[canvasId] = requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+// ─── MY PROFILE MATRIX CANVAS ────────────────────────────────
+// Solo view — same buildField method, MY_DATA only, no ghost, no overlap.
+function runMyMatrixCanvas(W, H) {
+  const canvasId = 'c-mymatrix';
+  if (CANVAS_ANIMS[canvasId]) return;
+  const cv = document.getElementById(canvasId);
+  if (!cv) return;
+  const dots = buildField(W, H, MY_DATA, 0);
+  let t = 0;
+  function frame() {
+    t++;
+    const ctx = cv.getContext('2d');
+    ctx.fillStyle = '#09090f'; ctx.fillRect(0, 0, W, H);
+    dots.forEach(d => {
+      const wx = Math.sin(t*d.f1+d.p1)*d.a1+Math.cos(t*d.f2+d.p2)*d.a2*0.6+Math.sin(t*d.f3+d.p3)*d.a3*0.4;
+      const wy = Math.cos(t*d.f1+d.p2)*d.a2+Math.sin(t*d.f2+d.p1)*d.a1*0.5+Math.cos(t*d.f3+d.p3)*d.a3*0.4;
+      const breathe = 0.5+0.5*Math.sin(t*d.f1*1.6+d.p1);
+      ctx.beginPath();
+      ctx.arc(d.ox+wx, d.oy+wy, Math.max(0.3, d.r*(0.5+0.5*breathe)), 0, Math.PI*2);
+      ctx.fillStyle = `rgba(${d.tr.r},${d.tr.g},${d.tr.b},${Math.min(1,d.baseAlpha*(0.5+0.5*breathe))})`;
+      ctx.fill();
+    });
+    drawFieldLabels(ctx, W, H, MY_DATA, 0);
+    CANVAS_ANIMS[canvasId] = requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+function toggleOverlap() {
+  _overlapOn = !_overlapOn;
+  _overlapTarget = _overlapOn ? 1 : 0;
+
+  const btn        = document.getElementById('overlap-toggle-btn');
+  const baseLeg    = document.getElementById('matrix-legend-base');
+  const overlapLeg = document.getElementById('matrix-legend-overlap');
+  const assessment = document.getElementById('overlap-assessment');
+  const modeLabel  = document.getElementById('matrix-mode-label');
+
+  if (_overlapOn) {
+    if (btn) { btn.textContent='Hide overlap'; btn.style.background='rgba(226,75,74,0.15)'; btn.style.borderColor='rgba(226,75,74,0.35)'; btn.style.color='#E24B4A'; }
+    if (baseLeg) baseLeg.style.display='none';
+    if (overlapLeg) overlapLeg.style.display='flex';
+    if (modeLabel) modeLabel.textContent='match overlap';
+    if (assessment) { assessment.style.display='block'; assessment.style.opacity='0'; setTimeout(()=>{ assessment.style.opacity='1'; }, 30); }
+    const lbl = document.getElementById('matrix-center-label');
+    if (lbl) { lbl.style.transition='opacity 0.3s ease'; lbl.style.opacity='1'; setTimeout(()=>{ lbl.style.transition='opacity 0.8s ease'; lbl.style.opacity='0'; }, 2000); }
+  } else {
+    if (btn) { btn.textContent='Show overlap'; btn.style.background='rgba(255,255,255,0.08)'; btn.style.borderColor='rgba(255,255,255,0.18)'; btn.style.color='rgba(232,230,240,0.65)'; }
+    if (baseLeg) baseLeg.style.display='flex';
+    if (overlapLeg) overlapLeg.style.display='none';
+    if (modeLabel) modeLabel.textContent='compatibility field';
+    if (assessment) { assessment.style.opacity='0'; setTimeout(()=>{ assessment.style.display='none'; }, 450); }
+    const lbl = document.getElementById('matrix-center-label');
+    if (lbl) { lbl.style.transition='opacity 0.3s ease'; lbl.style.opacity='1'; setTimeout(()=>{ lbl.style.transition='opacity 0.8s ease'; lbl.style.opacity='0'; }, 2000); }
+  }
+}
+
+// ─── CANVAS ENGINE ─────────────────────────────────────────────
+const TRAITS = [
+  {r:239,g:159,b:39},{r:212,g:83,b:126},{r:93,g:202,b:165},
+  {r:175,g:169,b:236},{r:133,g:183,b:235},{r:232,g:212,b:60}
+];
+// MY_DATA is recomputed from questionnaire answers after onboarding.
+// Falls back to demo values if not yet answered (for the demo flow).
+const MY_DATA_DEMO = {risk:78,emotion:55,assert:28,ambition:88,social:42,spont:63};
+let MY_DATA = Object.assign({}, MY_DATA_DEMO);
+
+function refreshMyData() {
+  if (STATE.onboarded && Object.keys(STATE.qAnswers).length > 5) {
+    const scores = computeScores();
+    const gdata  = scoresToGraphicData(scores);
+    Object.assign(MY_DATA, gdata);
+  }
+}
+let MATCH_DATA = {risk:72,emotion:50,assert:65,ambition:85,social:38,spont:25};
+const HIST_DATA = {
+  morgan: {risk:72,emotion:50,assert:65,ambition:85,social:38,spont:25},
+  jordan: {risk:55,emotion:70,assert:45,ambition:60,social:72,spont:48}
+};
+const IDS = ['risk','emotion','assert','ambition','social','spont'];
+
+function sr(seed) {
+  let s = (seed*9973+1)>>>0;
+  return () => { s=(Math.imul(s,1664525)+1013904223)>>>0; return s/0xffffffff; };
+}
+
+function buildDots(W, H, data, scale=1, seed_offset=0, cy_center=0.5) {
+  // Exponential scaling so low scores look DRAMATICALLY different from high scores.
+  // val=0.25 → tiny sparse dim cluster   (score 25)
+  // val=0.65 → medium cloud             (score 65)
+  // val=0.85 → large wide bright cloud  (score 85)
+  //
+  // Three properties all scale with val^power:
+  //   spread (cloud radius): val^1.6 * 0.28 * W  → range ~4px to ~100px
+  //   count:                 val^2.0 * 65         → range ~2 to ~55 dots
+  //   brightness (alpha):    val^0.8 * 0.85       → range ~0.06 to ~0.85
+  const dots = [];
+  TRAITS.forEach((tr,ti) => {
+    const val = (data[IDS[ti]]||50)/100;
+    const v16 = Math.pow(val, 1.6);
+    const v20 = Math.pow(val, 2.0);
+    const v08 = Math.pow(val, 0.8);
+
+    const N = Math.max(2, Math.round(v20 * 65 * scale));
+    const spread = v16 * 0.28;   // fraction of W
+
+    for (let i=0;i<N;i++) {
+      const r = sr(ti*5000+i*61+13+seed_offset);
+      // Gaussian-ish scatter: sum of 4 uniforms → bell curve
+      const gx = (r()+r()+r()+r()-2)/2;
+      const gy = (r()+r()+r()+r()-2)/2;
+      const cx = (0.10+ti/TRAITS.length*0.80)*W;
+      const cy = H*cy_center + Math.sin(ti*1.1)*H*0.16;
+      dots.push({
+        ox: cx + gx*(spread*W),
+        oy: cy + gy*(spread*H*0.6),
+        r: 0.4 + r()*2.0*val,          // dot size scales linearly with score
+        tr,
+        f1:0.0018+r()*0.0014, f2:0.0013+r()*0.0011, f3:0.0009+r()*0.0009,
+        p1:r()*Math.PI*2, p2:r()*Math.PI*2, p3:r()*Math.PI*2,
+        a1:(9+r()*12)*val,
+        a2:(6+r()*9)*val,
+        a3:(3+r()*6)*val,
+        baseAlpha: 0.08 + v08*0.82    // low score = very dim, high = bright
+      });
+    }
+  });
+  return dots;
+}
+
+function buildSearchDots(W, H) {
+  const dots = [];
+  TRAITS.forEach((tr,ti) => {
+    const angle = ti/TRAITS.length*Math.PI*2;
+    const cx = W/2+Math.cos(angle)*W*0.26, cy = H/2+Math.sin(angle)*H*0.26;
+    for (let i=0;i<60;i++) {
+      const r = sr(ti*4000+i*77+3);
+      const gx=(r()+r()+r()+r()-2)/2, gy=(r()+r()+r()+r()-2)/2;
+      dots.push({
+        ox:cx+gx*48, oy:cy+gy*48, r:0.5+r()*2.0, tr, ti,
+        f1:0.0014+r()*0.001, f2:0.001+r()*0.0008, f3:0.0007+r()*0.0006,
+        p1:r()*Math.PI*2, p2:r()*Math.PI*2, p3:r()*Math.PI*2,
+        a1:14+r()*16, a2:9+r()*12, a3:5+r()*8, baseAlpha:0.2+r()*0.6
+      });
+    }
+  });
+  return dots;
+}
+
+function buildIntroDots(W, H) {
+  const dots = [];
+  TRAITS.forEach((tr,ti) => {
+    for (let i=0;i<60+ti*8;i++) {
+      const r = sr(ti*3000+i*61+7);
+      dots.push({
+        x:(0.06+r()*0.88)*W, y:(0.06+r()*0.88)*H,
+        r:0.5+r()*2.2, tr,
+        f1:0.0015+r()*0.001, f2:0.001+r()*0.0008,
+        p1:r()*Math.PI*2, p2:r()*Math.PI*2,
+        a1:16+r()*20, a2:10+r()*14, alpha:0.12+r()*0.5
+      });
+    }
+  });
+  return dots;
+}
+
+const CANVAS_ANIMS = {};
+const traitProg = new Float32Array(6);
+let searchT = 0, searchPhase = 0;
+
+function runDotCanvas(canvasId, dotsArr) {
+  if (CANVAS_ANIMS[canvasId]) return;
+  const cv = document.getElementById(canvasId);
+  if (!cv) return;
+  const W = cv.offsetWidth||380, H = cv.offsetHeight||200;
+  cv.width = W; cv.height = H;
+  let t = 0;
+  function frame() {
+    t++;
+    const ctx = cv.getContext('2d');
+    ctx.fillStyle = '#09090f'; ctx.fillRect(0,0,W,H);
+    dotsArr.forEach(d => {
+      const wx = Math.sin(t*d.f1+d.p1)*d.a1+Math.cos(t*d.f2+d.p2)*d.a2*0.6+(d.f3?Math.sin(t*d.f3+d.p3)*d.a3*0.4:0);
+      const wy = Math.cos(t*d.f1+d.p2)*d.a2+Math.sin(t*d.f2+d.p1)*d.a1*0.5+(d.f3?Math.cos(t*d.f3+d.p3)*d.a3*0.4:0);
+      const breathe = 0.5+0.5*Math.sin(t*d.f1*1.6+d.p1);
+      ctx.beginPath();
+      const px = (d.x!==undefined?d.x:d.ox)+wx;
+      const py = (d.y!==undefined?d.y:d.oy)+wy;
+      ctx.arc(px,py,Math.max(0.3,d.r*(0.5+0.5*breathe)),0,Math.PI*2);
+      const alpha = d.alpha!==undefined?d.alpha*(0.5+0.5*breathe):Math.min(1,d.baseAlpha*(0.5+0.5*breathe));
+      ctx.fillStyle = `rgba(${d.tr.r},${d.tr.g},${d.tr.b},${alpha})`;
+      ctx.fill();
+    });
+    CANVAS_ANIMS[canvasId] = requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+function runSearchCanvas() {
+  const cv = document.getElementById('c-searching');
+  if (!cv) return;
+  const W = cv.offsetWidth||380, H = cv.offsetHeight||400;
+  cv.width = W; cv.height = H;
+  const dots = buildSearchDots(W,H);
+  searchT = 0; searchPhase = 0; traitProg.fill(0);
+  if (CANVAS_ANIMS['c-searching']) { cancelAnimationFrame(CANVAS_ANIMS['c-searching']); delete CANVAS_ANIMS['c-searching']; }
+  function frame() {
+    searchT++;
+    const ctx = cv.getContext('2d'); ctx.fillStyle='#09090f'; ctx.fillRect(0,0,W,H);
+    if (searchPhase<6) { traitProg[searchPhase]=Math.min(1,traitProg[searchPhase]+0.004); if(traitProg[searchPhase]>=1&&searchT%60===0) searchPhase=Math.min(6,searchPhase+1); }
+    dots.forEach(d => {
+      const wx=Math.sin(searchT*d.f1+d.p1)*d.a1+Math.cos(searchT*d.f2+d.p2)*d.a2*0.6+Math.sin(searchT*d.f3+d.p3)*d.a3*0.3;
+      const wy=Math.cos(searchT*d.f1+d.p2)*d.a2+Math.sin(searchT*d.f2+d.p1)*d.a1*0.5+Math.cos(searchT*d.f3+d.p3)*d.a3*0.4;
+      const breathe=0.5+0.5*Math.sin(searchT*d.f1*1.6+d.p1);
+      const p=traitProg[d.ti];
+      const alpha=p>0?(0.04+0.03*breathe)+(d.baseAlpha*(0.55+0.45*breathe)-(0.04+0.03*breathe))*p:0.04;
+      const r=p>0?d.r*0.3+(Math.max(0.3,d.r*(0.65+0.35*breathe))-d.r*0.3)*p:Math.max(0.3,d.r*0.3);
+      ctx.beginPath(); ctx.arc(d.ox+wx,d.oy+wy,r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(${d.tr.r},${d.tr.g},${d.tr.b},${Math.min(1,alpha)})`; ctx.fill();
+    });
+    CANVAS_ANIMS['c-searching'] = requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+function stopCanvasesInScreen(screenEl) {
+  if (screenEl.id === 's-myprofile') {
+    const lbl = document.getElementById('mymatrix-center-label');
+    if (lbl) lbl.style.opacity = '1';
+  }
+  // reset overlap toggle when leaving match profile
+  if (screenEl.id === 's-match-profile') {
+    _overlapOn = false; _overlapProgress = 0; _overlapTarget = 0;
+    _mpW = 0; _mpH = 0;
+    const lbl = document.getElementById('matrix-center-label');
+    if (lbl) { lbl.style.opacity='1'; }
+    const btn = document.getElementById('overlap-toggle-btn');
+    if (btn) { btn.textContent = 'Show overlap'; btn.style.background='rgba(255,255,255,0.08)'; btn.style.borderColor='rgba(255,255,255,0.15)'; btn.style.color='rgba(232,230,240,0.6)'; }
+    const baseLegend = document.getElementById('matrix-legend-base');
+    const overlapLegend = document.getElementById('matrix-legend-overlap');
+    const assessment = document.getElementById('overlap-assessment');
+    const modeLabel = document.getElementById('matrix-mode-label');
+    if (baseLegend) baseLegend.style.display='flex';
+    if (overlapLegend) overlapLegend.style.display='none';
+    if (assessment) assessment.style.display='none';
+    if (modeLabel) modeLabel.textContent='compatibility field';
+  }
+  screenEl.querySelectorAll('canvas').forEach(cv => {
+    if (CANVAS_ANIMS[cv.id]) { cancelAnimationFrame(CANVAS_ANIMS[cv.id]); delete CANVAS_ANIMS[cv.id]; }
+  });
+}
+
+function startCanvasesInScreen(screenEl) {
+  setTimeout(() => {
+    const id = screenEl.id;
+    if (id === 's-philosophy') {
+      const cv = document.getElementById('c-philosophy');
+      if (cv) { const W=cv.offsetWidth||380,H=cv.offsetHeight||300; cv.width=W;cv.height=H; runDotCanvas('c-philosophy',buildIntroDots(W,H)); }
+    }
+    if (id === 's-searching') runSearchCanvas();
+    if (id === 's-match-profile') {
+      const cv = document.getElementById('c-match-profile');
+      if (cv) {
+        _overlapProgress=0; _overlapTarget=0; _overlapOn=false;
+        _mpW=0; _mpH=0; // force dot rebuild for new canvas size
+        const W=cv.offsetWidth||380,H=cv.offsetHeight||300; cv.width=W;cv.height=H;
+        ensureMatchProfileDots(W,H); runMatchProfileCanvas();
+        const lbl = document.getElementById('matrix-center-label');
+        if (lbl) { lbl.style.opacity='1'; setTimeout(()=>{ lbl.style.opacity='0'; },2500); }
+      }
+    }
+    if (id === 's-myprofile') {
+      const cv = document.getElementById('c-mymatrix');
+      if (cv) {
+        const W=cv.offsetWidth||380, H=cv.offsetHeight||260;
+        cv.width=W; cv.height=H;
+        runMyMatrixCanvas(W, H);
+        // fade out center label after 2.5s
+        const lbl = document.getElementById('mymatrix-center-label');
+        if (lbl) { lbl.style.opacity='1'; setTimeout(()=>{ lbl.style.opacity='0'; }, 2500); }
+      }
+    }
+  }, 60);
+}
+
+// ─── HISTORY CARDS ────────────────────────────────────────────
+function toggleHistCard(cardId, canvasId) {
+  const card = document.getElementById(cardId);
+  const wasOpen = card.classList.contains('open');
+  document.querySelectorAll('.hist-card').forEach(c => {
+    if (c !== card) {
+      const cvIds = c.querySelectorAll('canvas');
+      cvIds.forEach(cv => { if(CANVAS_ANIMS[cv.id]){cancelAnimationFrame(CANVAS_ANIMS[cv.id]);delete CANVAS_ANIMS[cv.id];} });
+      c.classList.remove('open');
+    }
+  });
+  if (wasOpen) {
+    const cv = document.getElementById(canvasId);
+    if (cv && CANVAS_ANIMS[canvasId]) { cancelAnimationFrame(CANVAS_ANIMS[canvasId]); delete CANVAS_ANIMS[canvasId]; }
+    card.classList.remove('open');
+  } else {
+    card.classList.add('open');
+    setTimeout(() => {
+      const cv = document.getElementById(canvasId);
+      if (cv) {
+        const W=cv.offsetWidth||380, H=cv.offsetHeight||120; cv.width=W;cv.height=H;
+        const name = canvasId.split('-')[1]; // morgan or jordan
+        runDotCanvas(canvasId, buildDots(W,H,HIST_DATA[name]||MATCH_DATA,0.65));
+      }
+    }, 50);
+  }
+}
+
+// ─── SEARCH TIMER ─────────────────────────────────────────────
+function startSearchTimer() {
+  runSearchCanvas();
+  checkSearchTimer();
+}
+
+// ─── SUPABASE CLIENT ──────────────────────────────────────────
+// Replace these with your actual Supabase project values.
+// Found in: Supabase Dashboard → Project Settings → API
+const SUPABASE_URL  = 'https://iopawgrodvyrchluzrcz.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcGF3Z3JvZHZ5cmNobHV6cmN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNTQ3NjQsImV4cCI6MjA5NTgzMDc2NH0.S71Kewmt5YqPnm26mExyGPnN6VRFEpW8MOsH4c6AmDE';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ─── AUTH STATE ────────────────────────────────────────────────
+let CURRENT_USER = null;    // Supabase auth user object
+let CURRENT_PROFILE = null; // Row from public.profiles
+let CURRENT_MATCH   = null; // Active match row
+let MATCH_PROFILE   = null; // The other person's profile row
+let REALTIME_SUB    = null; // Active realtime subscription
+
+// ─── AUTH FUNCTIONS ────────────────────────────────────────────
+async function authLogin() {
+  const email    = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const btn      = document.getElementById('login-btn');
+  const errEl    = document.getElementById('login-error');
+  const errText  = document.getElementById('login-error-text');
+
+  if (!email || !password) { showAuthError('login', 'Please fill in all fields.'); return; }
+  btn.textContent = 'Signing in...'; btn.disabled = true;
+
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  btn.textContent = 'Sign in'; btn.disabled = false;
+
+  if (error) { showAuthError('login', error.message); return; }
+  // onAuthStateChange will handle the redirect
+}
+
+async function authSignup() {
+  const name     = document.getElementById('signup-name').value.trim();
+  const email    = document.getElementById('signup-email').value.trim();
+  const password = document.getElementById('signup-password').value;
+  const btn      = document.getElementById('signup-btn');
+
+  if (!name || !email || !password) { showAuthError('signup', 'Please fill in all fields.'); return; }
+  if (password.length < 8) { showAuthError('signup', 'Password must be at least 8 characters.'); return; }
+  btn.textContent = 'Creating account...'; btn.disabled = true;
+
+  const { data, error } = await supabase.auth.signUp({
+    email, password,
+    options: { data: { display_name: name } }
+  });
+  btn.textContent = 'Create account →'; btn.disabled = false;
+
+  if (error) { showAuthError('signup', error.message); return; }
+
+  // Show verify screen
+  document.getElementById('verify-email').textContent = email;
+  go('s-verify', false);
+}
+
+async function authForgotPassword() {
+  const email = document.getElementById('login-email').value.trim();
+  if (!email) { showAuthError('login', 'Enter your email address first.'); return; }
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.href
+  });
+  if (error) { showAuthError('login', error.message); return; }
+  showAuthError('login', 'Reset link sent — check your email.', true);
+}
+
+async function authLogout() {
+  await supabase.auth.signOut();
+  CURRENT_USER    = null;
+  CURRENT_PROFILE = null;
+  CURRENT_MATCH   = null;
+  MATCH_PROFILE   = null;
+  if (REALTIME_SUB) { supabase.removeChannel(REALTIME_SUB); REALTIME_SUB = null; }
+  STATE.conversationMessages = [];
+  saveState();
+  go('s-login', false);
+}
+
+function showAuthError(form, msg, isSuccess=false) {
+  const el   = document.getElementById(`${form}-error`);
+  const text = document.getElementById(`${form}-error-text`);
+  if (!el || !text) return;
+  el.style.display = 'block';
+  el.style.background = isSuccess ? 'rgba(93,202,165,0.1)' : 'rgba(226,75,74,0.1)';
+  el.style.borderColor = isSuccess ? 'rgba(93,202,165,0.25)' : 'rgba(226,75,74,0.25)';
+  text.style.color = isSuccess ? 'var(--success)' : 'var(--danger)';
+  text.textContent = msg;
+}
+
+// ─── PROFILE FUNCTIONS ────────────────────────────────────────
+async function loadProfile(userId) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .single();
+  if (error) { console.error('Profile load error:', error); return null; }
+  return data;
+}
+
+async function saveProfile(updates) {
+  if (!CURRENT_USER) return;
+  const { error } = await supabase
+    .from('profiles')
+    .update(updates)
+    .eq('id', CURRENT_USER.id);
+  if (error) console.error('Profile save error:', error);
+  else if (CURRENT_PROFILE) Object.assign(CURRENT_PROFILE, updates);
+}
+
+async function saveBasics(intention, children) {
+  await saveProfile({ intention, children });
+}
+
+async function saveQAnswers() {
+  if (!CURRENT_USER) return;
+  const rows = Object.entries(STATE.qAnswers).map(([qIdx, answer]) => ({
+    user_id: CURRENT_USER.id,
+    q_index: parseInt(qIdx),
+    answer_index: typeof answer === 'number' ? answer : null,
+    open_text:    typeof answer === 'string'  ? answer : null,
+  }));
+  const { error } = await supabase
+    .from('questionnaire_answers')
+    .upsert(rows, { onConflict: 'user_id,q_index' });
+  if (error) console.error('Q answers save error:', error);
+
+  // Compute scores and save to profile
+  const scores = computeScores();
+  const gdata  = scoresToGraphicData(scores);
+  await saveProfile({
+    scores: gdata,
+    q_complete: true
+  });
+}
+
+// ─── PHOTO UPLOAD ─────────────────────────────────────────────
+async function uploadPhoto(file, photoOrder, revealLevel) {
+  if (!CURRENT_USER) return null;
+  const ext      = file.name.split('.').pop();
+  const path     = `${CURRENT_USER.id}/${Date.now()}_${photoOrder}.${ext}`;
+  const { error: uploadError } = await supabase.storage
+    .from('photos')
+    .upload(path, file, { upsert: true });
+  if (uploadError) { console.error('Upload error:', uploadError); return null; }
+
+  const { data: urlData } = supabase.storage.from('photos').getPublicUrl(path);
+  const { data, error } = await supabase.from('photos').insert({
+    user_id:      CURRENT_USER.id,
+    storage_path: path,
+    public_url:   urlData?.publicUrl,
+    photo_order:  photoOrder,
+    reveal_level: revealLevel
+  }).select().single();
+  if (error) { console.error('Photo record error:', error); return null; }
+  return data;
+}
+
+// ─── MATCH FUNCTIONS ──────────────────────────────────────────
+async function loadActiveMatch() {
+  if (!CURRENT_USER) return null;
+  const uid = CURRENT_USER.id;
+  const { data, error } = await supabase
+    .from('matches')
+    .select('*')
+    .or(`user1_id.eq.${uid},user2_id.eq.${uid}`)
+    .not('state', 'in', '("closed","blocked")')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+  if (error && error.code !== 'PGRST116') console.error('Match load error:', error);
+  return data || null;
+}
+
+async function loadMatchProfile(matchRow) {
+  if (!matchRow || !CURRENT_USER) return null;
+  const otherId = matchRow.user1_id === CURRENT_USER.id
+    ? matchRow.user2_id : matchRow.user1_id;
+  return await loadProfile(otherId);
+}
+
+async function loadMessages(matchId) {
+  const { data, error } = await supabase
+    .from('messages')
+    .select('*')
+    .eq('match_id', matchId)
+    .order('created_at', { ascending: true });
+  if (error) { console.error('Messages load error:', error); return []; }
+  return data || [];
+}
+
+async function sendMessageToSupabase(body) {
+  if (!CURRENT_MATCH || !CURRENT_USER) return;
+  const { error } = await supabase.from('messages').insert({
+    match_id:  CURRENT_MATCH.id,
+    sender_id: CURRENT_USER.id,
+    body
+  });
+  if (error) console.error('Send message error:', error);
+}
+
+async function markMessagesRead(matchId) {
+  if (!CURRENT_USER) return;
+  await supabase
+    .from('messages')
+    .update({ read_at: new Date().toISOString() })
+    .eq('match_id', matchId)
+    .neq('sender_id', CURRENT_USER.id)
+    .is('read_at', null);
+}
+
+// ─── REALTIME SUBSCRIPTION ────────────────────────────────────
+function subscribeToMatch(matchId) {
+  if (REALTIME_SUB) { supabase.removeChannel(REALTIME_SUB); }
+
+  REALTIME_SUB = supabase
+    .channel(`match-${matchId}`)
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'messages',
+      filter: `match_id=eq.${matchId}`
+    }, (payload) => {
+      const msg = payload.new;
+      if (msg.sender_id === CURRENT_USER?.id) return; // own message already shown
+      STATE.conversationMessages.push({
+        from: 'them',
+        text: msg.body,
+        id:   msg.id
+      });
+      STATE.unreadAlerts = (STATE.unreadAlerts || 0) + 1;
+      saveState();
+      if (STATE.currentScreen === 's-conversation') {
+        renderConversation();
+      }
+      updateBadges();
+    })
+    .on('postgres_changes', {
+      event: 'UPDATE',
+      schema: 'public',
+      table: 'matches',
+      filter: `id=eq.${matchId}`
+    }, (payload) => {
+      CURRENT_MATCH = payload.new;
+      // Update reveal level in MATCH_DATA if changed
+      if (payload.new.reveal_level !== payload.old?.reveal_level) {
+        STATE.unreadAlerts = (STATE.unreadAlerts || 0) + 1;
+        updateBadges();
+      }
+    })
+    .subscribe();
+}
+
+// ─── ONBOARDING SAVE HOOKS ────────────────────────────────────
+// Override the key transition functions to persist to Supabase
+
+const _origStartSearching = startSearching;
+window.startSearchingWithSave = async function() {
+  // Save questionnaire answers to Supabase before searching
+  await saveQAnswers();
+  // Mark photos complete
+  await saveProfile({ photos_complete: true });
+  _origStartSearching();
+};
+
+// Override the "Complete setup →" button
+function startSearching() {
+  window.startSearchingWithSave();
+}
+
+// ─── SYNC: load remote state into local STATE ─────────────────
+async function syncFromSupabase() {
+  if (!CURRENT_USER) return;
+
+  CURRENT_PROFILE = await loadProfile(CURRENT_USER.id);
+  if (!CURRENT_PROFILE) return;
+
+  // Sync scores into MY_DATA
+  if (CURRENT_PROFILE.scores) {
+    Object.assign(MY_DATA, CURRENT_PROFILE.scores);
+  }
+
+  // Load questionnaire answers
+  const { data: answers } = await supabase
+    .from('questionnaire_answers')
+    .select('*')
+    .eq('user_id', CURRENT_USER.id);
+  if (answers && answers.length > 0) {
+    answers.forEach(a => {
+      STATE.qAnswers[a.q_index] = a.answer_index !== null ? a.answer_index : a.open_text;
+    });
+  }
+
+  // Load active match
+  CURRENT_MATCH = await loadActiveMatch();
+  if (CURRENT_MATCH) {
+    MATCH_PROFILE = await loadMatchProfile(CURRENT_MATCH);
+
+    // Sync MATCH_DATA from match profile scores
+    if (MATCH_PROFILE?.scores) {
+      Object.assign(MATCH_DATA, MATCH_PROFILE.scores);
+      // Recompute alignment
+      ALIGN.length = 0;
+      const ids = ['risk','emotion','assert','ambition','social','spont'];
+      ids.forEach(id => {
+        const diff = Math.abs((MY_DATA[id]||50) - (MATCH_DATA[id]||50));
+        ALIGN.push(diff < 25 ? 'shared' : 'divergent');
+      });
+    }
+
+    // Load messages
+    const msgs = await loadMessages(CURRENT_MATCH.id);
+    STATE.conversationMessages = msgs.map(m => ({
+      from: m.sender_id === CURRENT_USER.id ? 'you' : 'them',
+      text: m.body,
+      id:   m.id
+    }));
+
+    // Set match state from DB
+    const dbState = CURRENT_MATCH.state;
+    if      (dbState === 'found')       STATE.matchState = 'found';
+    else if (dbState === 'opening')     STATE.matchState = 'active';
+    else if (dbState === 'active')      STATE.matchState = 'active';
+    else if (dbState === 'reveal1' || dbState === 'reveal2') STATE.matchState = 'reveal';
+    else if (dbState === 'full_reveal') STATE.matchState = 'reveal';
+    else if (dbState === 'closed')      STATE.matchState = 'waiting';
+
+    subscribeToMatch(CURRENT_MATCH.id);
+  } else {
+    // No active match
+    STATE.matchState = CURRENT_PROFILE.q_complete && CURRENT_PROFILE.photos_complete
+      ? 'waiting' : 'waiting';
+  }
+
+  // Determine which screen to show
+  if (!CURRENT_PROFILE.q_complete) {
+    STATE.onboarded = false;
+    // Check if they've done the basics
+    const savedScreen = STATE.currentScreen;
+    if (['s-home','s-conversation','s-match-profile','s-myprofile',
+         's-settings','s-notifications','s-history'].includes(savedScreen)) {
+      go('s-philosophy', false);
+    } else {
+      go(savedScreen || 's-philosophy', false);
+    }
+  } else if (!CURRENT_PROFILE.photos_complete) {
+    STATE.onboarded = false;
+    go('s-photos', false);
+  } else {
+    STATE.onboarded = true;
+    go('s-home', false);
+  }
+
+  saveState();
+}
+
+// Override sendMessage to also persist to Supabase
+const _origSendMessage = sendMessage;
+window.sendMessage = async function() {
+  const input = document.getElementById('msg-input');
+  const text  = input?.value?.trim();
+  if (!text) return;
+
+  // Add to local state immediately (optimistic)
+  STATE.conversationMessages.push({ from:'you', text });
+  input.value = '';
+  saveState();
+  renderConversation();
+
+  // Persist to Supabase
+  await sendMessageToSupabase(text);
+};
+
+// Override markAllRead
+const _origMarkAllRead = markAllRead;
+window.markAllRead = function() {
+  _origMarkAllRead();
+  if (CURRENT_MATCH) markMessagesRead(CURRENT_MATCH.id);
+};
+
+// Add logout to settings (called from HTML)
+window.authLogout = authLogout;
+
+// ─── BOOT ─────────────────────────────────────────────────────
+loadState();
+
+// Show loading screen first
+document.getElementById('s-philosophy').classList.remove('active');
+document.getElementById('s-loading').classList.add('active');
+STATE.currentScreen = 's-loading';
+
+// Listen for auth state changes
+supabase.auth.onAuthStateChange(async (event, session) => {
+  if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+    CURRENT_USER = session.user;
+    await syncFromSupabase();
+  } else if (event === 'SIGNED_OUT') {
+    CURRENT_USER = null;
+    CURRENT_PROFILE = null;
+    document.getElementById('s-loading').classList.remove('active');
+    go('s-login', false);
+  } else if (event === 'INITIAL_SESSION') {
+    if (session) {
+      CURRENT_USER = session.user;
+      await syncFromSupabase();
+    } else {
+      // No session — show login
+      document.getElementById('s-loading').classList.remove('active');
+      go('s-login', false);
+    }
+  }
+});
+
+// ─── PHOTO UPLOAD HANDLER ─────────────────────────────────────
+async function handleHighlightUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const result = await uploadPhoto(file, 0, 0); // order 0 = highlight
+  if (result) {
+    // Show preview
+    const slot = document.querySelector('.photo-slot.dashed');
+    if (slot) {
+      const img = document.createElement('img');
+      img.src = result.public_url;
+      img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+      slot.innerHTML = '';
+      slot.appendChild(img);
+    }
+  }
+}
+
+// android back button
+window.addEventListener('popstate', (e) => { goBack(); });
+
+// prevent pull-to-refresh
+document.addEventListener('touchmove', (e) => {
+  if (e.touches.length > 1) e.preventDefault();
+}, {passive:false});
+
+// resize canvases
+window.addEventListener('resize', () => {
+  Object.keys(CANVAS_ANIMS).forEach(id => {
+    if (CANVAS_ANIMS[id]) { cancelAnimationFrame(CANVAS_ANIMS[id]); delete CANVAS_ANIMS[id]; }
+  });
+  const current = document.getElementById(STATE.currentScreen);
+  if (current) startCanvasesInScreen(current);
+});
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>

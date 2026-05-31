@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-title" content="Intima Matrix">
 <title>Intima Matrix</title>
 <link rel="manifest" href="manifest.json">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300;1,9..40,400&display=swap" rel="stylesheet">
@@ -2373,11 +2373,15 @@ function startSearchTimer() {
 }
 
 // ─── SUPABASE CLIENT ──────────────────────────────────────────
-// Replace these with your actual Supabase project values.
-// Found in: Supabase Dashboard → Project Settings → API
 const SUPABASE_URL  = 'https://iopawgrodvyrchluzrcz.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcGF3Z3JvZHZ5cmNobHV6cmN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNTQ3NjQsImV4cCI6MjA5NTgzMDc2NH0.S71Kewmt5YqPnm26mExyGPnN6VRFEpW8MOsH4c6AmDE';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+if (!window.supabase) {
+  console.error('Supabase SDK failed to load. Check network/CDN.');
+}
+const supabase = window.supabase
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON)
+  : null;
 
 // ─── AUTH STATE ────────────────────────────────────────────────
 let CURRENT_USER = null;    // Supabase auth user object
@@ -2388,6 +2392,7 @@ let REALTIME_SUB    = null; // Active realtime subscription
 
 // ─── AUTH FUNCTIONS ────────────────────────────────────────────
 async function authLogin() {
+  if (!supabase) { showAuthError('login', 'Connection unavailable. Please check your internet and reload.'); return; }
   const email    = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;
   const btn      = document.getElementById('login-btn');
@@ -2405,6 +2410,7 @@ async function authLogin() {
 }
 
 async function authSignup() {
+  if (!supabase) { showAuthError('signup', 'Connection unavailable. Please check your internet and reload.'); return; }
   const name     = document.getElementById('signup-name').value.trim();
   const email    = document.getElementById('signup-email').value.trim();
   const password = document.getElementById('signup-password').value;
@@ -2762,8 +2768,27 @@ document.getElementById('s-philosophy').classList.remove('active');
 document.getElementById('s-loading').classList.add('active');
 STATE.currentScreen = 's-loading';
 
+// Timeout fallback — if auth state doesn't fire within 6 seconds go to login
+const _authTimeout = setTimeout(() => {
+  if (STATE.currentScreen === 's-loading') {
+    document.getElementById('s-loading').classList.remove('active');
+    go('s-login', false);
+  }
+}, 6000);
+
+// If Supabase SDK didn't load (network issue, CDN blocked etc.)
+// fall back to the demo/offline mode immediately
+if (!supabase) {
+  console.warn('Supabase unavailable — running in offline demo mode');
+  document.getElementById('s-loading').classList.remove('active');
+  document.getElementById('s-philosophy').classList.add('active');
+  STATE.currentScreen = 's-philosophy';
+  startCanvasesInScreen(document.getElementById('s-philosophy'));
+} else {
+
 // Listen for auth state changes
 supabase.auth.onAuthStateChange(async (event, session) => {
+  clearTimeout(_authTimeout);
   if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
     CURRENT_USER = session.user;
     await syncFromSupabase();
@@ -2801,6 +2826,8 @@ async function handleHighlightUpload(event) {
     }
   }
 }
+
+} // end supabase check
 
 // android back button
 window.addEventListener('popstate', (e) => { goBack(); });

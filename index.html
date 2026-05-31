@@ -259,10 +259,19 @@ textarea.input{resize:vertical;min-height:90px;}
   SCREEN: LOGIN
 ══════════════════════════════════════════════ -->
 <div id="s-login" class="screen">
-  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:32px 24px;">
-    <p style="font-size:11px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;color:rgba(232,230,240,0.35);margin-bottom:8px;">Welcome back</p>
-    <p style="font-size:24px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:#fff;margin-bottom:32px;">Intima Matrix</p>
-    <div style="display:flex;flex-direction:column;gap:12px;">
+  <!-- canvas takes up top portion of the screen -->
+  <div style="flex-shrink:0;height:52vh;min-height:260px;position:relative;overflow:hidden;background:#09090f;">
+    <canvas id="c-login" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;"></canvas>
+    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;">
+      <div style="background:rgba(9,9,15,0.62);border:0.5px solid rgba(255,255,255,0.12);border-radius:12px;padding:10px 22px;text-align:center;">
+        <p style="font-size:10px;font-weight:500;letter-spacing:0.16em;text-transform:uppercase;color:rgba(232,230,240,0.38);margin-bottom:4px;">Welcome to</p>
+        <p style="font-size:22px;font-weight:500;letter-spacing:0.16em;text-transform:uppercase;color:#fff;">Intima Matrix</p>
+      </div>
+    </div>
+  </div>
+  <!-- form in scrollable bottom area -->
+  <div class="scroll-body">
+    <div style="padding:24px 24px 40px;display:flex;flex-direction:column;gap:12px;">
       <div>
         <p style="font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:rgba(232,230,240,0.35);margin-bottom:6px;">Email</p>
         <input class="input" type="email" id="login-email" placeholder="your@email.com" autocomplete="email">
@@ -2203,20 +2212,68 @@ function buildSearchDots(W, H) {
 }
 
 function buildIntroDots(W, H) {
-  const dots = [];
-  TRAITS.forEach((tr,ti) => {
-    for (let i=0;i<60+ti*8;i++) {
-      const r = sr(ti*3000+i*61+7);
-      dots.push({
-        x:(0.06+r()*0.88)*W, y:(0.06+r()*0.88)*H,
-        r:0.5+r()*2.2, tr,
-        f1:0.0015+r()*0.001, f2:0.001+r()*0.0008,
-        p1:r()*Math.PI*2, p2:r()*Math.PI*2,
-        a1:16+r()*20, a2:10+r()*14, alpha:0.12+r()*0.5
-      });
-    }
-  });
-  return dots;
+  // Use the same buildField method as the personality matrix
+  // with a rich demo profile so the splash screen looks alive
+  const DEMO = {risk:72,emotion:68,assert:55,ambition:80,social:60,spont:74};
+  return buildField(W, H, DEMO, 42);
+}
+
+function runLoginCanvas() {
+  const canvasId = 'c-login';
+  if (CANVAS_ANIMS[canvasId]) return;
+  const cv = document.getElementById(canvasId);
+  if (!cv) return;
+  // Use parent dimensions since canvas is absolutely positioned
+  const parent = cv.parentElement;
+  const W = parent ? parent.offsetWidth  || 380 : 380;
+  const H = parent ? parent.offsetHeight || 280 : 280;
+  cv.width = W; cv.height = H;
+  const DEMO = {risk:72,emotion:68,assert:55,ambition:80,social:60,spont:74};
+  const dots = buildField(W, H, DEMO, 88);
+  let t = 0;
+  function frame() {
+    t++;
+    const ctx = cv.getContext('2d');
+    ctx.fillStyle = '#09090f'; ctx.fillRect(0,0,W,H);
+    dots.forEach(d => {
+      const wx = Math.sin(t*d.f1+d.p1)*d.a1+Math.cos(t*d.f2+d.p2)*d.a2*0.6+Math.sin(t*d.f3+d.p3)*d.a3*0.4;
+      const wy = Math.cos(t*d.f1+d.p2)*d.a2+Math.sin(t*d.f2+d.p1)*d.a1*0.5+Math.cos(t*d.f3+d.p3)*d.a3*0.4;
+      const breathe = 0.5+0.5*Math.sin(t*d.f1*1.6+d.p1);
+      ctx.beginPath();
+      ctx.arc(d.ox+wx, d.oy+wy, Math.max(0.3, d.r*(0.5+0.5*breathe)), 0, Math.PI*2);
+      ctx.fillStyle = `rgba(${d.tr.r},${d.tr.g},${d.tr.b},${Math.min(1,d.baseAlpha*(0.5+0.5*breathe))})`;
+      ctx.fill();
+    });
+    CANVAS_ANIMS[canvasId] = requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+function runPhilosophyCanvas() {
+  const canvasId = 'c-philosophy';
+  if (CANVAS_ANIMS[canvasId]) return;
+  const cv = document.getElementById(canvasId);
+  if (!cv) return;
+  const W = cv.offsetWidth||380, H = cv.offsetHeight||300;
+  cv.width = W; cv.height = H;
+  const dots = buildIntroDots(W, H);
+  let t = 0;
+  function frame() {
+    t++;
+    const ctx = cv.getContext('2d');
+    ctx.fillStyle = '#09090f'; ctx.fillRect(0,0,W,H);
+    dots.forEach(d => {
+      const wx = Math.sin(t*d.f1+d.p1)*d.a1+Math.cos(t*d.f2+d.p2)*d.a2*0.6+Math.sin(t*d.f3+d.p3)*d.a3*0.4;
+      const wy = Math.cos(t*d.f1+d.p2)*d.a2+Math.sin(t*d.f2+d.p1)*d.a1*0.5+Math.cos(t*d.f3+d.p3)*d.a3*0.4;
+      const breathe = 0.5+0.5*Math.sin(t*d.f1*1.6+d.p1);
+      ctx.beginPath();
+      ctx.arc(d.ox+wx, d.oy+wy, Math.max(0.3, d.r*(0.5+0.5*breathe)), 0, Math.PI*2);
+      ctx.fillStyle = `rgba(${d.tr.r},${d.tr.g},${d.tr.b},${Math.min(1,d.baseAlpha*(0.5+0.5*breathe))})`;
+      ctx.fill();
+    });
+    CANVAS_ANIMS[canvasId] = requestAnimationFrame(frame);
+  }
+  frame();
 }
 
 const CANVAS_ANIMS = {};
@@ -2309,8 +2366,10 @@ function startCanvasesInScreen(screenEl) {
   setTimeout(() => {
     const id = screenEl.id;
     if (id === 's-philosophy') {
-      const cv = document.getElementById('c-philosophy');
-      if (cv) { const W=cv.offsetWidth||380,H=cv.offsetHeight||300; cv.width=W;cv.height=H; runDotCanvas('c-philosophy',buildIntroDots(W,H)); }
+      runPhilosophyCanvas();
+    }
+    if (id === 's-login') {
+      setTimeout(runLoginCanvas, 80);
     }
     if (id === 's-searching') runSearchCanvas();
     if (id === 's-match-profile') {

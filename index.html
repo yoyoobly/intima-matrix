@@ -204,7 +204,7 @@ textarea.input{resize:vertical;min-height:90px;}
 /* ─── CANVAS CONTAINERS ──────────────────────────────────────── */
 .canvas-wrap{position:relative;background:var(--canvas);overflow:hidden;}
 .canvas-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;}
-.canvas-label-box{background:rgba(9,9,15,0.65);border:0.5px solid rgba(255,255,255,0.13);border-radius:var(--r);padding:16px 24px;text-align:center;}
+.canvas-label-box{background:rgba(9,9,15,0.82);border:0.5px solid rgba(255,255,255,0.18);border-radius:var(--r);padding:16px 24px;text-align:center;}
 
 /* ─── STATUS BAR INDICATOR ───────────────────────────────────── */
 .status-bar-top{height:var(--safe-top);background:rgba(255,255,255,0.03);flex-shrink:0;}
@@ -249,43 +249,40 @@ textarea.input{resize:vertical;min-height:90px;}
 <!-- ══════════════════════════════════════════════
   SCREEN: LOADING (shown while auth state resolves)
 ══════════════════════════════════════════════ -->
-<div id="s-loading" class="screen" style="display:flex;align-items:center;justify-content:center;">
-  <div style="text-align:center;">
-    <p style="font-size:16px;font-weight:500;letter-spacing:0.2em;text-transform:uppercase;color:rgba(232,230,240,0.4);">Intima Matrix</p>
-  </div>
-</div>
+<div id="s-loading" class="screen" style="background:#09090f;"></div>
 
 <!-- ══════════════════════════════════════════════
   SCREEN: LOGIN
 ══════════════════════════════════════════════ -->
 <div id="s-login" class="screen">
-  <!-- canvas takes up top portion of the screen -->
-  <div style="flex-shrink:0;height:52vh;min-height:260px;position:relative;overflow:hidden;background:#09090f;">
-    <canvas id="c-login" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;"></canvas>
-    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;">
-      <div style="background:rgba(9,9,15,0.62);border:0.5px solid rgba(255,255,255,0.12);border-radius:12px;padding:10px 22px;text-align:center;">
-        <p style="font-size:10px;font-weight:500;letter-spacing:0.16em;text-transform:uppercase;color:rgba(232,230,240,0.38);margin-bottom:4px;">Welcome to</p>
-        <p style="font-size:22px;font-weight:500;letter-spacing:0.16em;text-transform:uppercase;color:#fff;">Intima Matrix</p>
+  <!-- canvas area — same pattern as s-philosophy -->
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;">
+    <div class="canvas-wrap" style="flex-shrink:0;height:21vh;min-height:110px;">
+      <canvas id="c-login" style="display:block;width:100%;height:100%;pointer-events:none;"></canvas>
+      <div class="canvas-overlay">
+        <div class="canvas-label-box">
+          <p class="t-label" style="margin-bottom:10px;">Welcome to</p>
+          <p class="t-display">Intima Matrix</p>
+          <p class="t-caption" style="margin-top:6px;letter-spacing:0.08em;">a different kind of dating app</p>
+        </div>
       </div>
     </div>
-  </div>
-  <!-- form in scrollable bottom area -->
-  <div class="scroll-body">
-    <div style="padding:24px 24px 40px;display:flex;flex-direction:column;gap:12px;">
-      <div>
-        <p style="font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:rgba(232,230,240,0.35);margin-bottom:6px;">Email</p>
-        <input class="input" type="email" id="login-email" placeholder="your@email.com" autocomplete="email">
-      </div>
-      <div>
-        <p style="font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:rgba(232,230,240,0.35);margin-bottom:6px;">Password</p>
-        <input class="input" type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
-      </div>
-      <div id="login-error" style="display:none;background:rgba(226,75,74,0.1);border:0.5px solid rgba(226,75,74,0.25);border-radius:8px;padding:10px 13px;">
-        <p style="font-size:12px;color:var(--danger);line-height:1.5;" id="login-error-text"></p>
-      </div>
-      <button class="btn btn-primary" onclick="authLogin()" id="login-btn" style="margin-top:4px;">Sign in</button>
-      <button class="btn btn-secondary" onclick="go('s-signup')">Create account</button>
-      <button onclick="authForgotPassword()" style="background:none;border:none;font-size:12px;color:rgba(232,230,240,0.35);padding:4px 0;text-align:center;cursor:pointer;font-family:inherit;">Forgot password?</button>
+    <!-- form — fixed height, no scroll needed -->
+    <div style="flex-shrink:0;padding:24px 24px 36px;display:flex;flex-direction:column;gap:12px;background:var(--canvas);">
+    <div>
+      <p style="font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:rgba(232,230,240,0.35);margin-bottom:6px;">Email</p>
+      <input class="input" type="email" id="login-email" placeholder="your@email.com" autocomplete="email">
+    </div>
+    <div>
+      <p style="font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:rgba(232,230,240,0.35);margin-bottom:6px;">Password</p>
+      <input class="input" type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <div id="login-error" style="display:none;background:rgba(226,75,74,0.1);border:0.5px solid rgba(226,75,74,0.25);border-radius:8px;padding:10px 13px;">
+      <p style="font-size:12px;color:var(--danger);line-height:1.5;" id="login-error-text"></p>
+    </div>
+    <button class="btn btn-primary" onclick="authLogin()" id="login-btn">Sign in</button>
+    <button class="btn btn-secondary" onclick="go('s-signup')">Create account</button>
+    <button onclick="authForgotPassword()" style="background:none;border:none;font-size:12px;color:rgba(232,230,240,0.35);padding:4px 0;text-align:center;cursor:pointer;font-family:inherit;">Forgot password?</button>
     </div>
   </div>
 </div>
@@ -522,7 +519,7 @@ textarea.input{resize:vertical;min-height:90px;}
   SCREEN: SEARCHING
 ══════════════════════════════════════════════ -->
 <div id="s-searching" class="screen">
-  <div class="canvas-wrap" style="flex:1;min-height:0;">
+  <div class="canvas-wrap" style="flex-shrink:0;height:21vh;min-height:110px;">
     <canvas id="c-searching" style="display:block;width:100%;height:100%;"></canvas>
     <div class="canvas-overlay">
       <div class="canvas-label-box">
@@ -2223,13 +2220,46 @@ function runLoginCanvas() {
   if (CANVAS_ANIMS[canvasId]) return;
   const cv = document.getElementById(canvasId);
   if (!cv) return;
-  // Use parent dimensions since canvas is absolutely positioned
-  const parent = cv.parentElement;
-  const W = parent ? parent.offsetWidth  || 380 : 380;
-  const H = parent ? parent.offsetHeight || 280 : 280;
+  const W = cv.offsetWidth || 380;
+  const H = cv.offsetHeight || 120;
   cv.width = W; cv.height = H;
-  const DEMO = {risk:72,emotion:68,assert:55,ambition:80,social:60,spont:74};
-  const dots = buildField(W, H, DEMO, 88);
+
+  // Build dots manually for the login canvas — higher scores, larger spread,
+  // more dots so the graphic is vivid even at small canvas height
+  const DEMO = {risk:88,emotion:82,assert:75,ambition:92,social:78,spont:85};
+  const dots = [];
+  const X_MIN=0.08, X_RANGE=0.84, Y_MID=0.50, Y_RANGE=0.22;
+  TRAITS.forEach((tr, ti) => {
+    const val  = DEMO[IDS[ti]] / 100;
+    const v20  = Math.pow(val, 2.0);
+    const v16  = Math.pow(val, 1.6);
+    const v08  = Math.pow(val, 0.8);
+    const col  = ti / (TRAITS.length - 1);
+    const cx   = (X_MIN + col * X_RANGE) * W;
+    const cy   = (Y_MID + (0.5 - val) * Y_RANGE) * H;
+    // More dots, wider spread for this small canvas
+    const N    = Math.max(14, Math.round(v20 * 80));
+    const spX  = Math.max(0.12 * W, v16 * 0.26 * W);
+    const spY  = Math.max(0.18 * H, v16 * 0.38 * H);
+    const tR   = ALIGN[ti]==='shared'?226:133;
+    const tG   = ALIGN[ti]==='shared'?75:183;
+    const tB   = ALIGN[ti]==='shared'?74:235;
+    for (let i=0;i<N;i++) {
+      const r  = sr(ti*5000+i*61+13+88);
+      const gx = (r()+r()+r()+r()-2)/2;
+      const gy = (r()+r()+r()+r()-2)/2;
+      dots.push({
+        ox: cx+gx*spX, oy: cy+gy*spY,
+        r:  Math.max(1.2, 0.8+r()*2.8*val),
+        tr, tR, tG, tB,
+        f1:0.0016+r()*0.0012, f2:0.0011+r()*0.0009, f3:0.0007+r()*0.0005,
+        p1:r()*Math.PI*2, p2:r()*Math.PI*2, p3:r()*Math.PI*2,
+        a1:(6+r()*9)*val, a2:(4+r()*6)*val, a3:(2+r()*4)*val,
+        baseAlpha: Math.max(0.35, 0.15+v08*0.82)
+      });
+    }
+  });
+
   let t = 0;
   function frame() {
     t++;

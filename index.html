@@ -296,29 +296,27 @@ textarea.input{resize:vertical;min-height:90px;}
     <p class="t-label">Create account</p>
     <div style="width:28px;"></div>
   </div>
-  <div class="scroll-body">
-    <div style="padding:24px 24px 32px;display:flex;flex-direction:column;gap:14px;">
-      <div class="card-raised" style="margin-bottom:4px;">
-        <p class="t-body" style="color:rgba(232,230,240,0.55);">This is the start of something honest. Take your time with the setup — it's what makes the matches real.</p>
-      </div>
-      <div>
-        <p style="font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:rgba(232,230,240,0.35);margin-bottom:6px;">Display name</p>
-        <input class="input" type="text" id="signup-name" placeholder="How you want to be known" autocomplete="name">
-      </div>
-      <div>
-        <p style="font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:rgba(232,230,240,0.35);margin-bottom:6px;">Email</p>
-        <input class="input" type="email" id="signup-email" placeholder="your@email.com" autocomplete="email">
-      </div>
-      <div>
-        <p style="font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:rgba(232,230,240,0.35);margin-bottom:6px;">Password</p>
-        <input class="input" type="password" id="signup-password" placeholder="At least 8 characters" autocomplete="new-password">
-      </div>
-      <div id="signup-error" style="display:none;background:rgba(226,75,74,0.1);border:0.5px solid rgba(226,75,74,0.25);border-radius:8px;padding:10px 13px;">
-        <p style="font-size:12px;color:var(--danger);line-height:1.5;" id="signup-error-text"></p>
-      </div>
-      <button class="btn btn-primary" onclick="authSignup()" id="signup-btn">Create account →</button>
-      <p class="t-caption" style="text-align:center;line-height:1.6;">By creating an account you agree to our terms of service and privacy policy.</p>
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:24px;gap:14px;">
+    <div class="card-raised">
+      <p class="t-body" style="color:rgba(232,230,240,0.55);">This is the start of something honest. Take your time with the setup — it's what makes the matches real.</p>
     </div>
+    <div>
+      <p style="font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:rgba(232,230,240,0.35);margin-bottom:6px;">Display name</p>
+      <input class="input" type="text" id="signup-name" placeholder="How you want to be known" autocomplete="name">
+    </div>
+    <div>
+      <p style="font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:rgba(232,230,240,0.35);margin-bottom:6px;">Email</p>
+      <input class="input" type="email" id="signup-email" placeholder="your@email.com" autocomplete="email">
+    </div>
+    <div>
+      <p style="font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:rgba(232,230,240,0.35);margin-bottom:6px;">Password</p>
+      <input class="input" type="password" id="signup-password" placeholder="At least 8 characters" autocomplete="new-password">
+    </div>
+    <div id="signup-error" style="display:none;background:rgba(226,75,74,0.1);border:0.5px solid rgba(226,75,74,0.25);border-radius:8px;padding:10px 13px;">
+      <p style="font-size:12px;color:var(--danger);line-height:1.5;" id="signup-error-text"></p>
+    </div>
+    <button class="btn btn-primary" onclick="authSignup()" id="signup-btn">Create account →</button>
+    <p class="t-caption" style="text-align:center;line-height:1.6;">By creating an account you agree to our terms of service and privacy policy.</p>
   </div>
 </div>
 
@@ -332,8 +330,14 @@ textarea.input{resize:vertical;min-height:90px;}
     </div>
     <p class="t-heading" style="margin-bottom:8px;">Check your email</p>
     <p class="t-body" style="color:rgba(232,230,240,0.45);max-width:280px;margin:0 auto 24px;">We sent a verification link to <span id="verify-email" style="color:var(--text-2);"></span></p>
-    <p class="t-caption" style="line-height:1.6;max-width:260px;margin:0 auto 20px;">Once verified, come back here and sign in.</p>
-    <button class="btn btn-ghost" onclick="go('s-login')" style="width:auto;padding:11px 24px;">Back to sign in</button>
+    <p class="t-caption" style="line-height:1.6;max-width:260px;margin:0 auto 20px;">Once verified, come back here and sign in. If you didn't receive the email, you can resend it below.</p>
+    <div id="verify-msg" style="display:none;margin-bottom:12px;padding:10px 16px;background:rgba(93,202,165,0.1);border:0.5px solid rgba(93,202,165,0.25);border-radius:8px;max-width:280px;">
+      <p style="font-size:12px;color:var(--success);line-height:1.5;" id="verify-msg-text"></p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:280px;">
+      <button class="btn btn-primary" onclick="resendVerification()" id="resend-btn">Resend verification email</button>
+      <button class="btn btn-ghost" onclick="go('s-login')">Back to sign in</button>
+    </div>
   </div>
 </div>
 
@@ -2511,7 +2515,10 @@ async function authSignup() {
 
   const { data, error } = await supabase.auth.signUp({
     email, password,
-    options: { data: { display_name: name } }
+    options: {
+      data: { display_name: name },
+      emailRedirectTo: window.location.origin + window.location.pathname
+    }
   });
   btn.textContent = 'Create account →'; btn.disabled = false;
 
@@ -2520,6 +2527,34 @@ async function authSignup() {
   // Show verify screen
   document.getElementById('verify-email').textContent = email;
   go('s-verify', false);
+}
+
+async function resendVerification() {
+  if (!supabase) return;
+  const email = document.getElementById('verify-email')?.textContent?.trim();
+  if (!email) return;
+  const btn = document.getElementById('resend-btn');
+  const msgEl = document.getElementById('verify-msg');
+  const msgText = document.getElementById('verify-msg-text');
+  btn.textContent = 'Sending...'; btn.disabled = true;
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email,
+    options: { emailRedirectTo: window.location.origin + window.location.pathname }
+  });
+  btn.textContent = 'Resend verification email'; btn.disabled = false;
+  msgEl.style.display = 'block';
+  if (error) {
+    msgEl.style.background = 'rgba(226,75,74,0.1)';
+    msgEl.style.borderColor = 'rgba(226,75,74,0.25)';
+    msgText.style.color = 'var(--danger)';
+    msgText.textContent = error.message;
+  } else {
+    msgEl.style.background = 'rgba(93,202,165,0.1)';
+    msgEl.style.borderColor = 'rgba(93,202,165,0.25)';
+    msgText.style.color = 'var(--success)';
+    msgText.textContent = 'Verification email sent — check your inbox.';
+  }
 }
 
 async function authForgotPassword() {

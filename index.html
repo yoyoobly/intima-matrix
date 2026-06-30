@@ -341,6 +341,29 @@ textarea.input{resize:vertical;min-height:90px;}
   </div>
 </div>
 
+<!-- ══════════════════════════════════════════════
+  SCREEN: SET NEW PASSWORD (reached via password reset link)
+══════════════════════════════════════════════ -->
+<div id="s-reset-password" class="screen">
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:32px 24px;">
+    <p style="font-size:11px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;color:rgba(232,230,240,0.35);margin-bottom:8px;text-align:center;">Reset your password</p>
+    <p style="font-size:13px;color:rgba(232,230,240,0.5);text-align:center;margin-bottom:28px;line-height:1.55;">Choose a new password for your account.</p>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div>
+        <p style="font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:rgba(232,230,240,0.35);margin-bottom:6px;">New password</p>
+        <input class="input" type="password" id="reset-password" placeholder="At least 8 characters" autocomplete="new-password">
+      </div>
+      <div>
+        <p style="font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:rgba(232,230,240,0.35);margin-bottom:6px;">Confirm password</p>
+        <input class="input" type="password" id="reset-password-confirm" placeholder="Re-enter password" autocomplete="new-password">
+      </div>
+      <div id="reset-error" style="display:none;background:rgba(226,75,74,0.1);border:0.5px solid rgba(226,75,74,0.25);border-radius:8px;padding:10px 13px;">
+        <p style="font-size:12px;color:var(--danger);line-height:1.5;" id="reset-error-text"></p>
+      </div>
+      <button class="btn btn-primary" onclick="submitNewPassword()" id="reset-btn" style="margin-top:4px;">Update password</button>
+    </div>
+  </div>
+</div>
 
 <!-- ══════════════════════════════════════════════
   SCREEN: PHILOSOPHY (splash / intro)
@@ -2473,7 +2496,14 @@ if (!window.supabase) {
   console.error('Supabase SDK failed to load. Check network/CDN.');
 }
 const supabase = window.supabase
-  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
+      auth: {
+        detectSessionInUrl: true,
+        persistSession: true,
+        autoRefreshToken: true,
+        flowType: 'pkce'
+      }
+    })
   : null;
 
 // ─── AUTH STATE ────────────────────────────────────────────────
@@ -2560,11 +2590,43 @@ async function resendVerification() {
 async function authForgotPassword() {
   const email = document.getElementById('login-email').value.trim();
   if (!email) { showAuthError('login', 'Enter your email address first.'); return; }
+  // Clean explicit URL — never the raw current href, which can carry
+  // stray hash fragments from a previous recovery attempt.
+  const cleanUrl = window.location.origin + window.location.pathname;
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: window.location.href
+    redirectTo: cleanUrl
   });
   if (error) { showAuthError('login', error.message); return; }
   showAuthError('login', 'Reset link sent — check your email.', true);
+}
+
+async function submitNewPassword() {
+  if (!supabase) return;
+  const pw  = document.getElementById('reset-password').value;
+  const pw2 = document.getElementById('reset-password-confirm').value;
+  const btn = document.getElementById('reset-btn');
+
+  if (!pw || pw.length < 8) { showResetError('Password must be at least 8 characters.'); return; }
+  if (pw !== pw2) { showResetError('Passwords do not match.'); return; }
+
+  btn.textContent = 'Updating...'; btn.disabled = true;
+  const { error } = await supabase.auth.updateUser({ password: pw });
+  btn.textContent = 'Update password'; btn.disabled = false;
+
+  if (error) { showResetError(error.message); return; }
+
+  // Clear the recovery token from the URL so reloading doesn't re-trigger it
+  window.history.replaceState({}, document.title, window.location.pathname);
+  go('s-login', false);
+  showAuthError('login', 'Password updated — sign in with your new password.', true);
+}
+
+function showResetError(msg) {
+  const el   = document.getElementById('reset-error');
+  const text = document.getElementById('reset-error-text');
+  if (!el || !text) return;
+  el.style.display = 'block';
+  text.textContent = msg;
 }
 
 async function authLogout() {
@@ -2911,6 +2973,15 @@ if (!supabase) {
 // Listen for auth state changes
 supabase.auth.onAuthStateChange(async (event, session) => {
   clearTimeout(_authTimeout);
+
+  // Password recovery link clicked — go straight to the reset screen,
+  // bypassing the normal sign-in sync entirely.
+  if (event === 'PASSWORD_RECOVERY') {
+    document.getElementById('s-loading').classList.remove('active');
+    go('s-reset-password', false);
+    return;
+  }
+
   if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
     CURRENT_USER = session.user;
     await syncFromSupabase();
